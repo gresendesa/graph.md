@@ -3,7 +3,7 @@
 Status do documento: ativo
 Owner: gresendesa
 Data de criacao: 2026-04-08
-Ultima atualizacao: 
+Ultima atualizacao: 2026-06-05
 
 ## Objetivo
 
@@ -18,11 +18,11 @@ Detalhes completos de cada sprint ficam em arquivos dedicados no diretorio scrum
 
 ## Sprints registradas
 
+### SPR-2026-01
 
-### SPR-YYYY-NN
-
-- Status:
-- Foco:
-- Prioridade PO dos itens:
-- Risco da sprint:
-- Arquivo detalhado: scrum/sprint/SPR-YYYY-NN.md
+- Status: concluida
+- Foco: Implementacao completa do mdgraph (modelos, pipeline, CLI, ciclos, cache)
+- Prioridade PO dos itens: 2 (alta) para todos
+- Risco da sprint: alto (B-007 risco 3; resolvido)
+- Resultado: 9/9 itens entregues, 107 testes passando
+- Arquivo detalhado: scrum/sprint/SPR-2026-01.md

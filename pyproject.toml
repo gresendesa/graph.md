@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mdgraph"
+version = "0.1.0"
+description = "Motor CLI de parsing e composicao documental em grafos Markdown"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "markdown-it-py>=3.0",
+    "typer>=0.12",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+mdgraph = "mdgraph.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
