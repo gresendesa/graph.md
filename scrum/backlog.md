@@ -39,6 +39,7 @@ Detalhes completos de cada item ficam em arquivos dedicados no diretorio scrum/b
 | B-007 | CLI - comando mdgraph compose                | SPR-2026-01 |
 | B-008 | Deteccao e resolucao de ciclos               | SPR-2026-01 |
 | B-009 | Cache persistente do indice                  | SPR-2026-01 |
+| B-010 | README e diretorio de exemplos               | SPR-2026-01 |
 
 ### Pendentes
 
