@@ -1,0 +1,27 @@
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Build
+dist/
+build/
+*.egg-info/
+*.egg
+
+# mdgraph cache
+.mdgraph/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
