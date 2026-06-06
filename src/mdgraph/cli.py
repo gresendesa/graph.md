@@ -406,3 +406,264 @@ def validate(
 
     if errors:
         raise typer.Exit(code=1)
+
+
+# ---------------------------------------------------------------------------
+# context (B-016)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def context(
+    uri: str = typer.Argument(..., help="Section URI in the format file.md#id"),
+    root: Optional[Path] = typer.Option(
+        None, "--root", "-r",
+        help="Repository root directory (default: file directory).",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """
+    Returns structured context of a section: metadata, outgoing edges, incoming edges.
+    """
+    import json as json_mod
+    from mdgraph.index import index_repository
+
+    file_path_str, section_id = _split_uri(uri)
+    file_path = Path(file_path_str).resolve()
+    repo_root = root.resolve() if root else file_path.parent
+
+    try:
+        graph = index_repository(repo_root)
+    except ParseError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    abs_uri = str(file_path) + "#" + section_id
+
+    if abs_uri not in graph.index.sections:
+        typer.echo(f"Error: URI '{abs_uri}' not found in index.", err=True)
+        raise typer.Exit(code=1)
+
+    section = graph.index.sections[abs_uri]
+
+    outgoing = [
+        {"uri": t, "type": _edge_type(abs_uri, t, section)}
+        for t in sorted(graph.outgoing_edges.get(abs_uri, set()))
+    ]
+    incoming = [
+        {"uri": s, "type": "incoming"}
+        for s in sorted(graph.incoming_edges.get(abs_uri, set()))
+    ]
+
+    if json_output:
+        typer.echo(json_mod.dumps({
+            "uri": abs_uri,
+            "metadata": section.metadata,
+            "outgoing": outgoing,
+            "incoming": incoming,
+        }, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(f"URI: {abs_uri}")
+        typer.echo(f"Metadata: {section.metadata}")
+        if outgoing:
+            typer.echo("Outgoing:")
+            for e in outgoing:
+                typer.echo(f"  [{e['type']}] {e['uri']}")
+        if incoming:
+            typer.echo("Incoming:")
+            for e in incoming:
+                typer.echo(f"  [ref] {e['uri']}")
+
+
+def _edge_type(src_uri: str, target_uri: str, section) -> str:
+    for d in section.directives:
+        if d.target_uri == target_uri:
+            return d.type
+    return "ref"
+
+
+# ---------------------------------------------------------------------------
+# backlinks (B-017)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def backlinks(
+    uri: str = typer.Argument(..., help="Section URI in the format file.md#id"),
+    root: Optional[Path] = typer.Option(
+        None, "--root", "-r",
+        help="Repository root directory (default: file directory).",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """
+    Lists all sections that reference this URI (incoming edges).
+    """
+    import json as json_mod
+    from mdgraph.index import index_repository
+
+    file_path_str, section_id = _split_uri(uri)
+    file_path = Path(file_path_str).resolve()
+    repo_root = root.resolve() if root else file_path.parent
+
+    try:
+        graph = index_repository(repo_root)
+    except ParseError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    abs_uri = str(file_path) + "#" + section_id
+
+    if abs_uri not in graph.index.sections:
+        typer.echo(f"Error: URI '{abs_uri}' not found in index.", err=True)
+        raise typer.Exit(code=1)
+
+    bl = sorted(graph.incoming_edges.get(abs_uri, set()))
+    result = [{"uri": s, "type": _edge_type(s, abs_uri, graph.index.sections.get(s))} for s in bl]
+
+    if json_output:
+        typer.echo(json_mod.dumps({"uri": abs_uri, "backlinks": result}, ensure_ascii=False, indent=2))
+    else:
+        if not result:
+            typer.echo(f"No backlinks found for '{abs_uri}'.")
+        else:
+            typer.echo(f"Backlinks for '{abs_uri}':")
+            for e in result:
+                typer.echo(f"  [{e['type']}] {e['uri']}")
+
+
+# ---------------------------------------------------------------------------
+# search (B-018)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def search(
+    predicate: str = typer.Argument(..., help="Predicate: key=value, key~=value, or tag:value"),
+    root: Path = typer.Option(
+        ..., "--root", "-r",
+        help="Repository root directory.",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """
+    Searches sections by metadata predicate. Supports key=value, key~=value, tag:value.
+    """
+    import json as json_mod
+    import re
+    from mdgraph.index import index_repository
+
+    try:
+        graph = index_repository(root.resolve())
+    except ParseError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    # Parse predicate
+    tag_match = re.match(r"^tag:(.+)$", predicate)
+    exact_match = re.match(r"^([^~=]+)=(.+)$", predicate)
+    substring_match = re.match(r"^([^~=]+)~=(.+)$", predicate)
+
+    def _matches(metadata: dict) -> bool:
+        if tag_match:
+            tag_val = tag_match.group(1)
+            tags = metadata.get("tags", [])
+            if isinstance(tags, str):
+                tags = [t.strip() for t in tags.split(",")]
+            return tag_val in tags
+        if substring_match:
+            key, val = substring_match.group(1), substring_match.group(2)
+            return val.lower() in str(metadata.get(key, "")).lower()
+        if exact_match:
+            key, val = exact_match.group(1), exact_match.group(2)
+            return str(metadata.get(key, "")) == val
+        return False
+
+    results = [
+        {"uri": uri, "metadata": section.metadata}
+        for uri, section in graph.index.sections.items()
+        if _matches(section.metadata)
+    ]
+    results.sort(key=lambda r: r["uri"])
+
+    if json_output:
+        typer.echo(json_mod.dumps({"predicate": predicate, "results": results}, ensure_ascii=False, indent=2))
+    else:
+        if not results:
+            typer.echo(f"No sections found matching '{predicate}'.")
+        else:
+            typer.echo(f"Found {len(results)} section(s) matching '{predicate}':")
+            for r in results:
+                typer.echo(f"  {r['uri']}")
+
+
+# ---------------------------------------------------------------------------
+# impact (B-019)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def impact(
+    uri: str = typer.Argument(..., help="Section URI in the format file.md#id"),
+    root: Optional[Path] = typer.Option(
+        None, "--root", "-r",
+        help="Repository root directory (default: file directory).",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
+) -> None:
+    """
+    Returns all sections that depend (directly or indirectly) on this URI via reverse BFS.
+    """
+    import json as json_mod
+    from collections import deque
+    from mdgraph.index import index_repository
+
+    file_path_str, section_id = _split_uri(uri)
+    file_path = Path(file_path_str).resolve()
+    repo_root = root.resolve() if root else file_path.parent
+
+    try:
+        graph = index_repository(repo_root)
+    except ParseError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    abs_uri = str(file_path) + "#" + section_id
+
+    if abs_uri not in graph.index.sections:
+        typer.echo(f"Error: URI '{abs_uri}' not found in index.", err=True)
+        raise typer.Exit(code=1)
+
+    # BFS on reverse graph (incoming edges)
+    direct = sorted(graph.incoming_edges.get(abs_uri, set()))
+    visited = set(direct) | {abs_uri}
+    queue = deque(direct)
+    indirect: list[str] = []
+
+    while queue:
+        current = queue.popleft()
+        for parent in graph.incoming_edges.get(current, set()):
+            if parent not in visited:
+                visited.add(parent)
+                indirect.append(parent)
+                queue.append(parent)
+
+    indirect.sort()
+
+    direct_out = [{"uri": u} for u in direct]
+    indirect_out = [{"uri": u} for u in indirect]
+
+    if json_output:
+        typer.echo(json_mod.dumps({
+            "uri": abs_uri,
+            "direct": direct_out,
+            "indirect": indirect_out,
+        }, ensure_ascii=False, indent=2))
+    else:
+        if not direct and not indirect:
+            typer.echo(f"No sections depend on '{abs_uri}'.")
+        else:
+            if direct:
+                typer.echo(f"Direct dependents of '{abs_uri}':")
+                for e in direct_out:
+                    typer.echo(f"  {e['uri']}")
+            if indirect:
+                typer.echo(f"Indirect dependents:")
+                for e in indirect_out:
+                    typer.echo(f"  {e['uri']}")

@@ -43,10 +43,15 @@ Full details for each item are in dedicated files under scrum/backlog/.
 
 | ID    | Title                                               | PO Priority   | Risk  | Tier       | Deps         |
 |-------|-----------------------------------------------------|---------------|-------|------------|--------------|
-| B-016 | mdgraph context: structured node context for agents | 1 (critical)  | 2     | IA v1      | B-004        |
-| B-017 | mdgraph backlinks: dedicated backlinks command      | 2 (high)      | 1     | IA v1      | B-004        |
-| B-018 | mdgraph search: metadata-based graph search         | 1 (critical)  | 2     | IA v1      | B-004,B-013  |
-| B-019 | mdgraph impact: reverse BFS affected nodes          | 1 (critical)  | 2     | IA v1      | B-004        |
+| B-016 | mdgraph context                                     | SPR-2026-06 |
+| B-017 | mdgraph backlinks                                   | SPR-2026-06 |
+| B-018 | mdgraph search                                      | SPR-2026-06 |
+| B-019 | mdgraph impact                                      | SPR-2026-06 |
+
+### Pending
+
+| ID    | Title                                               | PO Priority   | Risk  | Tier       | Deps         |
+|-------|-----------------------------------------------------|---------------|-------|------------|--------------|
 | B-020 | mdgraph neighbors: graph neighborhood exploration   | 2 (high)      | 1     | IA v2      | B-004        |
 | B-021 | mdgraph explain: find paths between nodes           | 2 (high)      | 2     | IA v2      | B-004        |
 | B-022 | mdgraph diff: structural diff against git history   | 2 (high)      | 3     | IA v2      | B-004        |

@@ -56,9 +56,18 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 
 ### SPR-2026-05
 
-- Status: doing
+- Status: done
 - Focus: Documentation translation, spec expansion (§9–§11), B-015 (validate), B-025 (--json)
 - PO Priority of items: B-014 = 2 (high), B-015 = 1 (critical), B-025 = 1 (critical)
 - Sprint risk: low (weighted avg 1.33)
 - Result: 5/5 tasks done, 152 tests passing
 - Detailed file: scrum/sprint/SPR-2026-05.md
+
+### SPR-2026-06
+
+- Status: done
+- Focus: IA v1 graph operations — context, backlinks, search, impact
+- PO Priority of items: 2 (high) for all
+- Sprint risk: medium (weighted avg 1.75)
+- Result: 4/4 tasks done, 178 tests passing
+- Detailed file: scrum/sprint/SPR-2026-06.md
