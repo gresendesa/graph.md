@@ -1,8 +1,8 @@
-# Technical Specification: Markdown Graph Composition Engine (`mdgraph`)
+# Technical Specification: MdBind — Markdown Graph Composition Engine
 
 ## 1. Definitions and Architectural Overview
 
-`mdgraph` is a CLI parsing and document composition engine. It treats Markdown file repositories as a graph database, where sections act as independent records that can reference each other and be dynamically composed.
+`MdBind` is a CLI parsing and document composition engine. It treats Markdown file repositories as a graph database, where sections act as independent records that can reference each other and be dynamically composed.
 
 The architecture is built on a strict separation between **Document Physics** (where elements are written) and **Document Semantics** (what they mean and how they connect).
 
@@ -12,7 +12,7 @@ The architecture is built on a strict separation between **Document Physics** (w
   * **Documentary Representation:** Based on exact offsets (line/character) from the original file. Used for extractions with 100% fidelity (preserving spaces, formatting, and comments).
   * **Semantic Representation:** Based on the Abstract Syntax Tree (AST) and Tokens. Used for structural analysis, graph validation, and artifact composition.
 
-The engine is designed to serve both human authors and AI agents. For agents, `mdgraph` acts as a **deterministic semantic memory layer**: stable URIs provide addressable knowledge nodes; the graph structure encodes relationships; and CLI commands provide bounded, reproducible retrieval operations that fit inside context windows.
+The engine is designed to serve both human authors and AI agents. For agents, `MdBind` acts as a **deterministic semantic memory layer**: stable URIs provide addressable knowledge nodes; the graph structure encodes relationships; and CLI commands provide bounded, reproducible retrieval operations that fit inside context windows.
 
 ---
 
@@ -77,7 +77,7 @@ Directives are written as standard Markdown links, which means they render corre
 * **Spatial Order:** Node expansion via `@include` strictly follows the order of directive tokens in the parent document's AST.
 * **Node Deduplication:** If A includes D and B also includes D: the default behavior (`deduplicate: false`) materializes D twice, reflecting exact textual intent. Under the `--deduplicate` flag, the engine materializes the first occurrence and replaces the second with a `@ref` (simple link).
 * **Failure Handling (`--strict`):** If a referenced URI does not exist in the index:
-  * **Default:** The engine emits a warning to stderr, injects an HTML placeholder in the document (`<!-- mdgraph: broken ref -->`) and continues.
+  * **Default:** The engine emits a warning to stderr, injects an HTML placeholder in the document (`<!-- mdb: broken ref -->`) and continues.
   * **Strict:** The engine raises a fatal error and aborts the process, guaranteeing integrity for CI/CD pipelines.
 * **Heading Normalization:** The root section is always normalized to H1. Child sections are offset relative to the root level, preserving the original heading hierarchy structure.
 * **Depth Control (`--depth`):** When `depth <= 0`, include directives are discarded (not expanded), enabling shallow materialization for context-budget-aware consumers such as LLM agents.
@@ -159,7 +159,7 @@ class SectionGraph(BaseModel):
 Reading massive repositories requires that the parsing and validation step does not occur repetitively during queries.
 
 * **Initial State:** The `index_repository()` command builds the `SectionIndex` entirely in memory from `.md` files.
-* **Persistence:** After core stabilization, the typed `SectionIndex` is serialized to the cache at `.mdgraph/index.json`.
+* **Persistence:** After core stabilization, the typed `SectionIndex` is serialized to the cache at `.mdb/index.json`.
 * **Optimization:** Subsequent executions load the `.json` and re-evaluate the AST only for files whose OS hashes differ from the cache (SHA-256 incremental cache).
 
 ---
@@ -168,7 +168,7 @@ Reading massive repositories requires that the parsing and validation step does 
 
 The engine responds to commands aligned with its dual representation (Documentary vs Semantic).
 
-### 8.1. `mdgraph get <URI>` (Documentary Fidelity)
+### 8.1. `mdb get <URI>` (Documentary Fidelity)
 
 Extracts an isolated section based strictly on the spatial representation (`source_start_line` and `source_end_line`).
 
@@ -176,14 +176,14 @@ Extracts an isolated section based strictly on the spatial representation (`sour
 * **Guarantee:** Millimetric preservation of original formatting, comments, and spaces. Nothing passes through the AST reconstructor.
 * **Flags:** `--json` outputs `{"uri": "...", "content": "..."}`.
 
-### 8.2. `mdgraph tree <URI>` (Structural View)
+### 8.2. `mdb tree <URI>` (Structural View)
 
 Queries the in-memory Graph and resolves the visual hierarchy based on semantics.
 
 * **Output:** Illustrative dependency tree in the terminal. Supports `--refs` to display connections pointing to the requested URI (Dependency Inversion). Supports `--depth N` to limit traversal depth.
 * **Flags:** `--json` outputs a structured tree object.
 
-### 8.3. `mdgraph compose <URI>` (Semantic Materialization)
+### 8.3. `mdb compose <URI>` (Semantic Materialization)
 
 The engine enters transpiler mode. Based on the `ParsedSection` AST, it navigates token by token.
 
@@ -191,7 +191,7 @@ The engine enters transpiler mode. Based on the `ParsedSection` AST, it navigate
 * Upon encountering an `IncludeDirective` node: interrupts the flow, fetches the target AST, injects it resolving heading levels mathematically, and resumes scanning.
 * **Flags:** `--deduplicate`, `--strict`, `--depth N`, `--json`.
 
-### 8.4. `mdgraph validate [--root <path>]` (Integrity Validation)
+### 8.4. `mdb validate [--root <path>]` (Integrity Validation)
 
 Scans the full repository graph and reports all structural integrity issues without modifying any file.
 
@@ -207,13 +207,13 @@ Scans the full repository graph and reports all structural integrity issues with
 
 ## 9. Semantic Memory Model
 
-`mdgraph` is designed to function as a **deterministic graph-based semantic memory layer** for AI agents, not merely as a document composition tool for human authors.
+`MdBind` is designed to function as a **deterministic graph-based semantic memory layer** for AI agents, not merely as a document composition tool for human authors.
 
 ### 9.1. Design Principles for Agent Consumption
 
 * **Stable URIs as Knowledge Addresses:** Every section has a globally stable URI (`file.md#id`). An agent can store, retrieve, and reference knowledge nodes by URI across sessions without re-discovery overhead.
 * **YAML Payload as Semantic Index:** The `section:` block doubles as a structured semantic index. Fields such as `title`, `tags`, `owner`, and custom keys enable graph-based search and filtering without full-text parsing.
-* **Document vs. Context Materialization:** `mdgraph compose` produces a *document* (full fidelity, for human reading). `mdgraph context` and `mdgraph context-compose` produce *context payloads* (bounded, token-budget-aware, for LLM consumption).
+* **Document vs. Context Materialization:** `mdb compose` produces a *document* (full fidelity, for human reading). `mdb context` and `mdb context-compose` produce *context payloads* (bounded, token-budget-aware, for LLM consumption).
 * **Reproducibility:** All CLI commands are deterministic given the same graph state. Agents can cache URIs, tree structures, and composed outputs with confidence.
 * **Bounded Retrieval:** The `--depth` flag enables agents to control retrieval scope, preventing context window overflow on large graphs.
 
@@ -235,7 +235,7 @@ Scans the full repository graph and reports all structural integrity issues with
 
 This section specifies the mathematical semantics and complexity of each extended CLI command.
 
-### 10.1. `mdgraph validate`
+### 10.1. `mdb validate`
 
 $$f: G \to \text{ValidationReport}$$
 
@@ -252,7 +252,7 @@ Full graph scan. Collects all structural violations without mutation.
 }
 ```
 
-### 10.2. `mdgraph context <URI>`
+### 10.2. `mdb context <URI>`
 
 $$f: G \times v \to \text{ContextPayload}$$
 
@@ -270,7 +270,7 @@ Returns the structured context of a single node: its metadata, outgoing edges, a
 }
 ```
 
-### 10.3. `mdgraph backlinks <URI>`
+### 10.3. `mdb backlinks <URI>`
 
 $$f: G \times v \to V_{in}$$
 
@@ -283,7 +283,7 @@ Returns all nodes with a directed edge pointing to $v$.
 {"uri": "...", "backlinks": [{"uri": "...", "type": "ref|include"}]}
 ```
 
-### 10.4. `mdgraph search <predicate>`
+### 10.4. `mdb search <predicate>`
 
 $$f: G \times \text{Predicate} \to V$$
 
@@ -297,7 +297,7 @@ Scans all nodes and returns those matching a metadata predicate.
 {"predicate": "...", "results": [{"uri": "...", "metadata": {}}]}
 ```
 
-### 10.5. `mdgraph impact <URI>`
+### 10.5. `mdb impact <URI>`
 
 $$f: G \times v \to \{V_{direct}, V_{indirect}\}$$
 
@@ -314,7 +314,7 @@ Returns the set of all nodes that depend (directly or indirectly) on $v$ via the
 }
 ```
 
-### 10.6. `mdgraph neighbors <URI> [--depth N]`
+### 10.6. `mdb neighbors <URI> [--depth N]`
 
 $$f: G \times v \times d \to V$$
 
@@ -327,7 +327,7 @@ Returns all nodes reachable from $v$ within $d$ hops in either direction.
 {"uri": "...", "depth": 2, "neighbors": [{"uri": "...", "distance": 1, "direction": "outgoing|incoming"}]}
 ```
 
-### 10.7. `mdgraph explain <URI_A> <URI_B>`
+### 10.7. `mdb explain <URI_A> <URI_B>`
 
 $$f: G \times v_a \times v_b \to \text{Paths}$$
 
@@ -340,7 +340,7 @@ Finds all simple paths between two nodes.
 {"from": "...", "to": "...", "paths": [[{"uri": "..."}]]}
 ```
 
-### 10.8. `mdgraph diff <URI> [--since <git-ref>]`
+### 10.8. `mdb diff <URI> [--since <git-ref>]`
 
 $$f: G_{current} \times G_{historical} \to \Delta$$
 
@@ -358,7 +358,7 @@ Computes the structural difference between the current graph state and a histori
 }
 ```
 
-### 10.9. `mdgraph query <expression>`
+### 10.9. `mdb query <expression>`
 
 $$f: G \times \text{BooleanExpr} \to V$$
 
@@ -372,7 +372,7 @@ Advanced boolean query over section metadata. Supports AND, OR, NOT operators.
 {"expression": "...", "results": [{"uri": "...", "metadata": {}}]}
 ```
 
-### 10.10. `mdgraph context-compose <URI> [--depth N] [--token-limit N]`
+### 10.10. `mdb context-compose <URI> [--depth N] [--token-limit N]`
 
 $$f: G \times v \times d \times t \to \text{ContextPayload}$$
 
@@ -397,7 +397,7 @@ Bounded semantic materialization for LLM agent consumption. Composes the node tr
 
 All commands support a `--json` flag that produces machine-readable output. The schemas below are the normative contracts for all JSON outputs.
 
-### 11.1. `mdgraph get <URI> --json`
+### 11.1. `mdb get <URI> --json`
 
 ```json
 {
@@ -409,7 +409,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.2. `mdgraph tree <URI> --json`
+### 11.2. `mdb tree <URI> --json`
 
 ```json
 {
@@ -425,7 +425,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.3. `mdgraph compose <URI> --json`
+### 11.3. `mdb compose <URI> --json`
 
 ```json
 {
@@ -436,7 +436,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.4. `mdgraph validate --json`
+### 11.4. `mdb validate --json`
 
 ```json
 {
@@ -463,7 +463,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.5. `mdgraph context <URI> --json`
+### 11.5. `mdb context <URI> --json`
 
 ```json
 {
@@ -474,7 +474,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.6. `mdgraph backlinks <URI> --json`
+### 11.6. `mdb backlinks <URI> --json`
 
 ```json
 {
@@ -483,7 +483,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.7. `mdgraph search <predicate> --json`
+### 11.7. `mdb search <predicate> --json`
 
 ```json
 {
@@ -492,7 +492,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.8. `mdgraph impact <URI> --json`
+### 11.8. `mdb impact <URI> --json`
 
 ```json
 {
@@ -502,7 +502,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.9. `mdgraph neighbors <URI> --json`
+### 11.9. `mdb neighbors <URI> --json`
 
 ```json
 {
@@ -512,7 +512,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.10. `mdgraph explain <URI_A> <URI_B> --json`
+### 11.10. `mdb explain <URI_A> <URI_B> --json`
 
 ```json
 {
@@ -524,7 +524,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.11. `mdgraph diff --json`
+### 11.11. `mdb diff --json`
 
 ```json
 {
@@ -536,7 +536,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.12. `mdgraph query <expression> --json`
+### 11.12. `mdb query <expression> --json`
 
 ```json
 {
@@ -545,7 +545,7 @@ All commands support a `--json` flag that produces machine-readable output. The 
 }
 ```
 
-### 11.13. `mdgraph context-compose <URI> --json`
+### 11.13. `mdb context-compose <URI> --json`
 
 ```json
 {

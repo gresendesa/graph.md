@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from mdgraph.composer import compose
-from mdgraph.cycle import enter_node, would_cycle
-from mdgraph.index import index_repository
+from mdbind.composer import compose
+from mdbind.cycle import enter_node, would_cycle
+from mdbind.index import index_repository
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CYCLES = FIXTURES / "cycles"

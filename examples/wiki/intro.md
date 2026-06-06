@@ -8,7 +8,7 @@ owner: example
 tags: [root, wiki]
 ```
 
-Welcome to the `mdgraph` example wiki.
+Welcome to the `MdBind` example wiki.
 
 This page is the repository root. It references fundamental concepts
 and includes the complete installation guide.

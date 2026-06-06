@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import List
 
-from mdgraph.models import Directive, ParsedSection
+from mdbind.models import Directive, ParsedSection
 
 # Regex que captura [@tipo: label](uri) ou [@tipo](uri)
 # Grupo 1: tipo (ref|include|query)

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from mdgraph.models import (
+from mdbind.models import (
     Directive,
     ParsedSection,
     RawSection,

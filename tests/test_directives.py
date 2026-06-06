@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from mdgraph.directives import _resolve_uri, extract_directives
-from mdgraph.parser import parse_file, parse_text
+from mdbind.directives import _resolve_uri, extract_directives
+from mdbind.parser import parse_file, parse_text
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

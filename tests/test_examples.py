@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from mdgraph.cli import app
-from mdgraph.index import index_repository
+from mdbind.cli import app
+from mdbind.index import index_repository
 
 EXAMPLES = Path(__file__).parent.parent / "examples" / "wiki"
 runner = CliRunner()

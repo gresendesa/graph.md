@@ -89,3 +89,12 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 - Sprint risk: low (all documentation)
 - Result: 3/3 tasks done, 209 tests passing
 - Detailed file: scrum/sprint/SPR-2026-08.md
+
+### SPR-2026-09
+
+- Status: done
+- Focus: B-026 — rename project to MdBind, CLI command to mdb
+- PO Priority: 2 (high)
+- Sprint risk: medium
+- Result: 5/5 tasks done, 209 tests passing
+- Detailed file: scrum/sprint/SPR-2026-09.md

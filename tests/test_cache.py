@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from mdgraph.cache import (
+from mdbind.cache import (
     deserialize_section,
     file_hash,
     load_cache,
     save_cache,
     serialize_section,
 )
-from mdgraph.index import index_repository
+from mdbind.index import index_repository
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REPO = FIXTURES / "repo"

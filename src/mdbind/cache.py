@@ -95,7 +95,7 @@ def serialize_section(section) -> dict:
 
 def deserialize_section(data: dict):
     """Reconstroi ParsedSection a partir de dict do cache."""
-    from mdgraph.models import Directive, ParsedSection, RawSection
+    from mdbind.models import Directive, ParsedSection, RawSection
 
     raw = RawSection(**data["raw"])
     directives = [Directive(type=d["type"], target_uri=d["target_uri"])
@@ -124,7 +124,7 @@ def build_index_with_cache(
     sections_list: lista de ParsedSection prontas para popular o SectionIndex
     file_hashes: hashes atuais de todos os arquivos processados
     """
-    from mdgraph.parser import parse_file
+    from mdbind.parser import parse_file
 
     current_hashes: Dict[str, str] = {str(f): file_hash(f) for f in md_files}
 

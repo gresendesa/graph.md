@@ -14,11 +14,11 @@ from typing import Optional
 
 import typer
 
-from mdgraph.parser import ParseError, parse_file
+from mdbind.parser import ParseError, parse_file
 
 app = typer.Typer(
-    name="mdgraph",
-    help="Motor CLI de parsing e composicao documental em grafos Markdown.",
+    name="mdb",
+    help="MdBind — Structured memory in plain Markdown.",
     add_completion=False,
 )
 
@@ -121,7 +121,7 @@ def tree(
     """
     Exibe a hierarquia visual de dependencias de uma secao.
     """
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
@@ -250,8 +250,8 @@ def compose(
     Materializa um documento Markdown unificado expandindo @include recursivamente.
     """
     import json as json_mod
-    from mdgraph.composer import compose as do_compose
-    from mdgraph.index import index_repository
+    from mdbind.composer import compose as do_compose
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
@@ -318,7 +318,7 @@ def validate(
     Exit code 0 = clean, 1 = errors found.
     """
     import json as json_mod
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     repo_root = (root.resolve() if root else Path.cwd())
 
@@ -425,7 +425,7 @@ def context(
     Returns structured context of a section: metadata, outgoing edges, incoming edges.
     """
     import json as json_mod
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
@@ -498,7 +498,7 @@ def backlinks(
     Lists all sections that reference this URI (incoming edges).
     """
     import json as json_mod
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
@@ -548,7 +548,7 @@ def search(
     """
     import json as json_mod
     import re
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     try:
         graph = index_repository(root.resolve())
@@ -612,7 +612,7 @@ def impact(
     """
     import json as json_mod
     from collections import deque
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
@@ -688,7 +688,7 @@ def neighbors(
     """
     import json as json_mod
     from collections import deque
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
@@ -761,7 +761,7 @@ def explain(
     Finds all simple directed paths from URI_A to URI_B.
     """
     import json as json_mod
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     def _resolve(uri: str, default_parent: Path) -> str:
         file_str, frag = _split_uri(uri)
@@ -849,9 +849,9 @@ def diff(
     import subprocess
     import tempfile
     import shutil
-    from mdgraph.index import index_repository
-    from mdgraph.parser import parse_text
-    from mdgraph.models import SectionGraph, SectionIndex
+    from mdbind.index import index_repository
+    from mdbind.parser import parse_text
+    from mdbind.models import SectionGraph, SectionIndex
 
     repo_root = root.resolve()
 
@@ -979,7 +979,7 @@ def query(
     """
     import json as json_mod
     import re
-    from mdgraph.index import index_repository
+    from mdbind.index import index_repository
 
     try:
         graph = index_repository(root.resolve())
@@ -1121,8 +1121,8 @@ def context_compose(
     Like compose, but respects --depth and --token-limit budgets.
     """
     import json as json_mod
-    from mdgraph.composer import compose as do_compose
-    from mdgraph.index import index_repository
+    from mdbind.composer import compose as do_compose
+    from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()

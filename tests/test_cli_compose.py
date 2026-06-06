@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from mdgraph.cli import app
-from mdgraph.composer import compose
-from mdgraph.index import index_repository
+from mdbind.cli import app
+from mdbind.composer import compose
+from mdbind.index import index_repository
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CYCLES = FIXTURES / "cycles"
@@ -23,7 +23,7 @@ def _uri(filename: str, section_id: str) -> str:
 
 
 def _make_graph_with_phantom_include():
-    from mdgraph.models import ParsedSection, RawSection, SectionGraph, SectionIndex
+    from mdbind.models import ParsedSection, RawSection, SectionGraph, SectionIndex
     with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
         f.write("# Temp\n\n```yaml\nsection: temp\n```\n\n[@include: y](nao-existe.md#y)\n")
         tmp_path = f.name
@@ -60,7 +60,7 @@ class TestComposeBasico:
 
 class TestComposeStrict:
     def test_placeholder_html_sem_strict(self):
-        from mdgraph.composer import compose as do_compose
+        from mdbind.composer import compose as do_compose
         g, tmp_path = _make_graph_with_phantom_include()
         try:
             warnings = []
@@ -71,7 +71,7 @@ class TestComposeStrict:
             os.unlink(tmp_path)
 
     def test_strict_uri_ausente_levanta_erro(self):
-        from mdgraph.composer import compose as do_compose
+        from mdbind.composer import compose as do_compose
         g, tmp_path = _make_graph_with_phantom_include()
         try:
             with pytest.raises(ValueError, match="URI nao encontrada"):
@@ -88,8 +88,8 @@ class TestComposeDeduplicate:
         assert "Conteudo do filho incluido" in result
 
     def test_com_dedup_segundo_include_vira_ref(self):
-        from mdgraph.composer import compose as do_compose
-        from mdgraph.models import (ParsedSection, RawSection,
+        from mdbind.composer import compose as do_compose
+        from mdbind.models import (ParsedSection, RawSection,
                                     SectionGraph, SectionIndex)
         import tempfile, os
 
@@ -148,7 +148,7 @@ class TestComposeHeadingNormalization:
 
     def _make_two_level_graph(self):
         """Dois nos no mesmo nivel (level 2) com include entre eles."""
-        from mdgraph.models import (ParsedSection, RawSection,
+        from mdbind.models import (ParsedSection, RawSection,
                                     SectionGraph, SectionIndex)
         import tempfile, os
 
@@ -186,7 +186,7 @@ class TestComposeHeadingNormalization:
         return g, root_uri, child_uri, root_path, child_path
 
     def test_root_nivel2_vira_nivel1(self):
-        from mdgraph.composer import compose as do_compose
+        from mdbind.composer import compose as do_compose
         import os
         g, root_uri, _, root_path, child_path = self._make_two_level_graph()
         try:
@@ -200,7 +200,7 @@ class TestComposeHeadingNormalization:
 
     def test_filho_mesmo_nivel_vira_nivel2(self):
         """Filho no mesmo nivel do root (ambos ##) deve virar ## no compose."""
-        from mdgraph.composer import compose as do_compose
+        from mdbind.composer import compose as do_compose
         import os
         g, root_uri, _, root_path, child_path = self._make_two_level_graph()
         try:

@@ -1,2 +1,0 @@
-[console_scripts]
-mdgraph = mdgraph.cli:app

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mdgraph.cache import build_index_with_cache, save_cache, serialize_section
-from mdgraph.models import SectionGraph, SectionIndex
-from mdgraph.parser import ParseError
+from mdbind.cache import build_index_with_cache, save_cache, serialize_section
+from mdbind.models import SectionGraph, SectionIndex
+from mdbind.parser import ParseError
 
 
 def index_repository(

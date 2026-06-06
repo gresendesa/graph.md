@@ -7,9 +7,9 @@ import re
 from pathlib import Path
 from typing import FrozenSet, List, Optional, Set
 
-from mdgraph.cycle import enter_node, would_cycle
-from mdgraph.directives import _resolve_uri
-from mdgraph.models import SectionGraph
+from mdbind.cycle import enter_node, would_cycle
+from mdbind.directives import _resolve_uri
+from mdbind.models import SectionGraph
 
 _PLACEHOLDER_TPL = "<!-- mdgraph:unresolved uri=\"{uri}\" -->"
 _INCLUDE_RE = re.compile(r"^\[@include(?::[^\]]*)?\]\(([^)]+)\)\s*$")

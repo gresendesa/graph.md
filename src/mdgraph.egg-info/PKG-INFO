@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: mdgraph
-Version: 0.1.0
-Summary: Motor CLI de parsing e composicao documental em grafos Markdown
-Requires-Python: >=3.11
-Requires-Dist: pydantic>=2.0
-Requires-Dist: markdown-it-py>=3.0
-Requires-Dist: typer>=0.12
-Requires-Dist: pyyaml>=6.0

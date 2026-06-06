@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from mdgraph.cli import app
+from mdbind.cli import app
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REPO = FIXTURES / "repo"

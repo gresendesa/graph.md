@@ -41,5 +41,5 @@ Before starting, make sure you understand the advanced concept:
 
 4. Verify installation:
    ```bash
-   mdgraph --help
+   mdb --help
    ```

@@ -60,10 +60,12 @@ Full details for each item are in dedicated files under scrum/backlog/.
 
 ### Pending
 
+| ID    | Title                                               | PO Priority   | Risk  | Tier  | Deps  |
+|-------|-----------------------------------------------------|---------------|-------|-------|-------|
+| B-026 | Rename project to MdBind, CLI command to mdb        | SPR-2026-09   |
+
+### Pending
+
 (none — all items delivered)
-
-### Planned
-
-(none)
 
 ## Template for new items

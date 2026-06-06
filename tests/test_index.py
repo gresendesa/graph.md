@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from mdgraph.index import index_repository
-from mdgraph.parser import ParseError
+from mdbind.index import index_repository
+from mdbind.parser import ParseError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REPO = FIXTURES / "repo"

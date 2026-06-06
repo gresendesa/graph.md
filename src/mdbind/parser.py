@@ -14,8 +14,8 @@ from typing import List
 import yaml
 from markdown_it import MarkdownIt
 
-from mdgraph.directives import bind_directives
-from mdgraph.models import Directive, ParsedSection, RawSection
+from mdbind.directives import bind_directives
+from mdbind.models import Directive, ParsedSection, RawSection
 
 
 # ---------------------------------------------------------------------------

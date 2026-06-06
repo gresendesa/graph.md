@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from mdgraph.parser import ParseError, parse_file, parse_text
+from mdbind.parser import ParseError, parse_file, parse_text
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
