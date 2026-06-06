@@ -1,56 +1,64 @@
-# Sprints - Consolidador
+# Sprints - Consolidator
 
-Status do documento: ativo
+Document status: active
 Owner: gresendesa
-Data de criacao: 2026-04-08
-Ultima atualizacao: 2026-06-06
+Creation date: 2026-04-08
+Last updated: 2026-06-06
 
-## Objetivo
+## Purpose
 
-Este arquivo e um consolidado sintetico das sprints.
+This file is a synthetic consolidator of sprints.
 
-Detalhes completos de cada sprint ficam em arquivos dedicados no diretorio scrum/sprint/.
+Full details for each sprint are in dedicated files under scrum/sprint/.
 
-## Convencao
+## Convention
 
 - Sprint: SPR-YYYY-NN
-- Arquivo detalhado: scrum/sprint/SPR-YYYY-NN.md
+- Detailed file: scrum/sprint/SPR-YYYY-NN.md
 
-## Sprints registradas
+## Registered sprints
 
 ### SPR-2026-01
 
-- Status: concluida
-- Foco: Implementacao completa do mdgraph (modelos, pipeline, CLI, ciclos, cache)
-- Prioridade PO dos itens: 2 (alta) para todos
-- Risco da sprint: alto (B-007 risco 3; resolvido)
-- Resultado: 9/9 itens entregues, 107 testes passando
-- Arquivo detalhado: scrum/sprint/SPR-2026-01.md
+- Status: done
+- Focus: Full mdgraph implementation (models, pipeline, CLI, cycles, cache)
+- PO Priority of items: 2 (high) for all
+- Sprint risk: high (B-007 risk 3; resolved)
+- Result: 9/9 items delivered, 107 tests passing
+- Detailed file: scrum/sprint/SPR-2026-01.md
 
 ### SPR-2026-02
 
-- Status: concluida
-- Foco: Sintaxe de diretivas renderizavel como link Markdown (B-011)
-- Prioridade PO dos itens: 1 (critica)
-- Risco da sprint: medio
-- Resultado: 1/1 item entregue, 130 testes passando
-- Nota: inclui hotfix de heading normalization no composer (root sempre vira H1, filhos relativizados corretamente)
-
-### SPR-2026-04
-
-- Status: concluida
-- Foco: Sintaxe yaml para bloco de metadados (B-013)
-- Prioridade PO dos itens: 1 (critica)
-- Risco da sprint: medio
-- Resultado: 1/1 item entregue, 132 testes passando
-- Arquivo detalhado: scrum/sprint/SPR-2026-04.md
+- Status: done
+- Focus: Renderable directive syntax as Markdown link (B-011)
+- PO Priority of items: 1 (critical)
+- Sprint risk: medium
+- Result: 1/1 item delivered, 130 tests passing
+- Note: includes heading normalization hotfix in composer (root always becomes H1, children relativized correctly)
 
 ### SPR-2026-03
 
-- Status: concluida
-- Foco: Profundidade configuravel no comando tree (B-012)
-- Prioridade PO dos itens: 1 (critica)
-- Risco da sprint: baixo
-- Resultado: 1/1 item entregue, 126 testes passando
-- Arquivo detalhado: scrum/sprint/SPR-2026-03.md
-- Arquivo detalhado: scrum/sprint/SPR-2026-02.md
+- Status: done
+- Focus: Configurable depth in tree command (B-012)
+- PO Priority of items: 1 (critical)
+- Sprint risk: low
+- Result: 1/1 item delivered, 126 tests passing
+- Detailed file: scrum/sprint/SPR-2026-03.md
+
+### SPR-2026-04
+
+- Status: done
+- Focus: YAML syntax for section metadata block (B-013)
+- PO Priority of items: 1 (critical)
+- Sprint risk: medium
+- Result: 1/1 item delivered, 132 tests passing
+- Detailed file: scrum/sprint/SPR-2026-04.md
+
+### SPR-2026-05
+
+- Status: doing
+- Focus: Documentation translation, spec expansion (§9–§11), B-015 (validate), B-025 (--json)
+- PO Priority of items: B-014 = 2 (high), B-015 = 1 (critical), B-025 = 1 (critical)
+- Sprint risk: low (weighted avg 1.33)
+- Result: 5/5 tasks done, 152 tests passing
+- Detailed file: scrum/sprint/SPR-2026-05.md

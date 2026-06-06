@@ -1,25 +1,25 @@
-# Decisions - Memoria e Governanca
+# Decisions - Memory and Governance
 
-Status do documento: ativo
+Document status: active
 Owner: gresendesa
-Data de criacao: 2026-04-08
-Ultima atualizacao:
+Creation date: 2026-04-08
+Last updated:
 
-## Objetivo
+## Purpose
 
-Registrar historico de decisoes sobre a arquitetura da memoria e o processo de governanca deste workspace.
+Record the history of decisions about memory architecture and process governance of this workspace.
 
-## Formato de registro
+## Record format
 
 - ID: DEC-XXX
-- Data:
-- Status: proposta | aprovada | substituida | obsoleta
-- Contexto:
-- Decisao:
-- Impacto:
-- Arquivos afetados:
-- Revisao futura:
+- Date:
+- Status: proposed | approved | replaced | obsolete
+- Context:
+- Decision:
+- Impact:
+- Files affected:
+- Future review:
 
-## Historico
+## History
 
 ---

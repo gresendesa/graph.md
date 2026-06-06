@@ -1,90 +1,123 @@
-# Especificação Técnica: Motor de Composição em Grafos Markdown (`mdgraph`)
+# Technical Specification: Markdown Graph Composition Engine (`mdgraph`)
 
-## 1. Definições e Visão Geral Arquitetural
+## 1. Definitions and Architectural Overview
 
-A ferramenta (`mdgraph`) é um motor CLI de *parsing* e composição documental. Ela trata repositórios de arquivos Markdown como um banco de dados em grafo, onde seções atuam como registros independentes que podem se referenciar e ser compostos dinamicamente.
+`mdgraph` is a CLI parsing and document composition engine. It treats Markdown file repositories as a graph database, where sections act as independent records that can reference each other and be dynamically composed.
 
-A arquitetura baseia-se na separação estrita entre a **Física do Documento** (onde os elementos estão escritos) e a **Semântica do Documento** (o que eles significam e como se conectam).
+The architecture is built on a strict separation between **Document Physics** (where elements are written) and **Document Semantics** (what they mean and how they connect).
 
-* **Nó Primário (Seção):** O documento é composto primordialmente por seções. Uma seção é delimitada exclusivamente pela hierarquia de títulos (*headings*), independentemente de seu conteúdo.
-* **URI de Seção:** O identificador global do nó no formato `caminho/do/arquivo.md#id-da-secao`. O caminho é sempre resolvido de forma relativa ao arquivo que faz a chamada.
-* **Dificuldade de Representação:** O motor mantém duas representações simultâneas das seções:
-* **Representação Documental:** Baseada em *offsets* exatos (linha/caractere) do arquivo original. Usada para extrações com 100% de fidelidade (preservando espaços, formatação e comentários).
-* **Representação Semântica:** Baseada na Árvore de Sintaxe Abstrata (AST) e *Tokens*. Usada para análise estrutural, validação de grafos e composição de artefatos.
+* **Primary Node (Section):** The document is composed primarily of sections. A section is delimited exclusively by the heading hierarchy, regardless of its content.
+* **Section URI:** The global node identifier in the format `path/to/file.md#section-id`. The path is always resolved relative to the calling file.
+* **Dual Representation:** The engine maintains two simultaneous representations of sections:
+  * **Documentary Representation:** Based on exact offsets (line/character) from the original file. Used for extractions with 100% fidelity (preserving spaces, formatting, and comments).
+  * **Semantic Representation:** Based on the Abstract Syntax Tree (AST) and Tokens. Used for structural analysis, graph validation, and artifact composition.
 
-
+The engine is designed to serve both human authors and AI agents. For agents, `mdgraph` acts as a **deterministic semantic memory layer**: stable URIs provide addressable knowledge nodes; the graph structure encodes relationships; and CLI commands provide bounded, reproducible retrieval operations that fit inside context windows.
 
 ---
 
-## 2. Pipeline de Processamento e Descoberta
+## 2. Processing Pipeline and Discovery
 
-Para evitar dependências frágeis e permitir validações ricas, o ciclo de vida do *parsing* obedece a um fluxo unidirecional rigoroso de cinco etapas:
+To avoid fragile dependencies and enable rich validations, the parsing lifecycle follows a strict unidirectional five-stage flow:
 
 **`Markdown ➔ AST ➔ RawSection ➔ ParsedSection ➔ Index ➔ Graph`**
 
-1. **AST Generation:** O motor lê o texto Markdown e gera a lista plana de *tokens*.
-2. **Section Discovery (`RawSection`):** O motor varre a AST buscando `heading_open`. Ao encontrar, marca o `token_start`. Ele continua varrendo até o final do documento ou até interceptar o primeiro `heading_open` subsequente de nível menor ou igual, marcando o `token_end`. Os *offsets* do arquivo fonte (linhas) também são capturados aqui.
-3. **Metadata Binding (`ParsedSection`):** Com os limites da seção isolados, o motor analisa os *tokens* internos buscando o bloco de código marcado como `section`. O conteúdo é validado e extraído.
-4. **Tokenization de Diretivas:** Dentro da seção recém-delimitada, as marcações semânticas (como `@include`) são convertidas de texto bruto para objetos tipados no motor.
-5. **Grafo e Composição:** Os nós validados vão para o Índice e, em seguida, as arestas formam o Grafo para materialização.
+1. **AST Generation:** The engine reads the Markdown text and generates the flat token list.
+2. **Section Discovery (`RawSection`):** The engine scans the AST for `heading_open` tokens. Upon finding one, it marks `token_start`. It continues scanning until end-of-document or until intercepting the first subsequent `heading_open` of equal or lower level, marking `token_end`. Source file offsets (lines) are also captured here.
+3. **Metadata Binding (`ParsedSection`):** With section boundaries isolated, the engine analyzes internal tokens seeking the code block marked as `yaml` with a `section:` key. The content is validated and extracted.
+4. **Directive Tokenization:** Within the newly delimited section, semantic markers (such as `@include`) are converted from raw text into typed engine objects.
+5. **Graph and Composition:** Validated nodes go to the Index, then edges form the Graph for materialization.
 
 ---
 
-## 3. Sintaxe e Validação do Payload
+## 3. Payload Syntax and Validation
 
-O bloco de metadados não define a seção; ele apenas confere identidade a uma seção já descoberta hierarquicamente.
+The metadata block does not define the section; it only confers identity to a section already discovered hierarchically.
 
-* **Posição Estrita:** O bloco `section` deve ser obrigatoriamente o **primeiro bloco textual** logo após o *heading* que originou a seção. Se houver texto normal antes do bloco, o motor acusa erro de validação (*"payload não é o primeiro bloco"*).
-* **Unicidade Interna:** O motor acusa erro se detectar mais de um bloco `section` dentro dos limites da mesma `RawSection`.
-* **Esquema Obrigatório:** O campo `id` é estritamente obrigatório. O motor emite um erro (*"seção sem payload obrigatório"*) caso o bloco não possua esse campo, pois ele garante a unicidade do par `(arquivo, id)` no repositório.
-* **Campos Livres:** Campos como `title` e `description` são reservados. Quaisquer outras chaves (ex: `owner`, `tags`) são preservadas no dicionário dinâmico da seção.
+* **Strict Position:** The `section` block must be the **first textual block** immediately after the heading that originated the section. If there is normal text before the block, the engine raises a validation error (*"payload is not the first block"*).
+* **Internal Uniqueness:** The engine raises an error if it detects more than one `section` block within the boundaries of the same `RawSection`.
+* **Mandatory Schema:** The `id` field is strictly required. The engine emits an error (*"section without required payload"*) if the block does not have this field, since it guarantees the uniqueness of the `(file, id)` pair in the repository.
+* **Free Fields:** Fields such as `title` and `description` are reserved. Any other keys (e.g., `owner`, `tags`) are preserved in the section's dynamic dictionary.
 
----
+The YAML block format for a section payload is:
 
-## 4. Semântica de Diretivas e Composição
+````markdown
+## My Section
 
-O motor transcende a busca textual (Regex). As marcações não são apenas "substituídas", elas existem na árvore semântica da seção (`ParsedSection`) como nós próprios (ex: `IncludeDirective`).
-
-### 4.1. Tipos de Arestas (DSL)
-
-* **Dependência (`@ref`):** Sintaxe `@ref(uri)`. Cria uma aresta direcional apontando dependência contextual, mas **não** embute o conteúdo na composição final.
-* **Inclusão/Transclusão (`@include`):** Sintaxe `@include(uri)`. Cria uma aresta direcional e instrui o motor a substituir o *token* da diretiva pela árvore (AST) completa do nó de destino durante a composição.
-* **Consulta Dinâmica (`@query` - *Reserved for Future Use*):** Sintaxe `@query(key=value)`. Uma aresta polimórfica projetada para resolver múltiplos nós em tempo de execução baseando-se no *payload* YAML (GraphQL Documental).
-
-### 4.2. Regras de Composição
-
-* **Ordem Espacial:** A expansão de nós via `@include` segue estritamente a ordem de ocorrência dos *tokens* diretivos na AST do documento pai.
-* **Deduplicação de Nós:** Se A inclui D e B também inclui D. No comportamento padrão (`deduplicate: false`), D é materializado duas vezes, refletindo a intenção textual exata. Sob a *flag* `--deduplicate`, o motor materializa a primeira ocorrência e substitui a segunda por um `@ref` (link simples).
-* **Tratamento de Falhas (`--strict`):** Se uma URI referenciada não existir no índice:
-* **Padrão:** O motor emite um *Warning* no terminal, injeta um *placeholder* em HTML no documento (``) e prossegue.
-* **Strict:** O motor lança um Erro fatal e aborta o processo, garantindo integridade para pipelines de CI/CD.
-
-
+```yaml
+section: my-section-id
+title: Human-readable title
+owner: team-name
+tags: [architecture, core]
+```
+````
 
 ---
 
-## 5. Modelagem Matemática (Teoria dos Grafos)
+## 4. Directive Semantics and Composition
 
-O ecossistema documental é modelado como um **Grafo Direcionado (Dígrafo) Geral**, definido como $G = (V, E)$. O repositório documentado pode conter ciclos lógicos nativamente.
+The engine transcends textual search (Regex). Markers are not merely "substituted"; they exist in the section's semantic tree (`ParsedSection`) as first-class nodes (e.g., `IncludeDirective`).
 
-* Vértices $v \in V$ possuem propriedades estruturais e semânticas.
-* Arestas $E$ são classificadas por diretivas ($E_{ref}$, $E_{include}$) e indexadas bidirecionalmente para buscas em $O(1)$.
-* **Resolução Acíclica:** Durante a operação de materialização (`compose`), o algoritmo de travessia rastreia o caminho de execução atual ($P$). Se for avaliada uma aresta de inclusão $(x, y)$ onde $y \in P$, o **ciclo é detectado e a aresta é rompida silenciosamente na saída**, prevenindo *loops* de renderização, sem alterar a topologia do Grafo original.
+Directives are written as standard Markdown links, which means they render correctly in any Markdown viewer:
+
+```markdown
+[@include: label](path/to/file.md#section-id)
+[@ref: label](path/to/file.md#section-id)
+[@query: label](key=value)
+```
+
+### 4.1. Edge Types (DSL)
+
+* **Dependency (`@ref`):** Creates a directional edge pointing to a contextual dependency, but does **not** embed the content in the final composition.
+* **Inclusion / Transclusion (`@include`):** Creates a directional edge and instructs the engine to substitute the directive token with the complete AST tree of the target node during composition.
+* **Dynamic Query (`@query` — *Reserved for Future Use*):** A polymorphic edge designed to resolve multiple nodes at runtime based on YAML payload (Documentary GraphQL).
+
+### 4.2. Composition Rules
+
+* **Spatial Order:** Node expansion via `@include` strictly follows the order of directive tokens in the parent document's AST.
+* **Node Deduplication:** If A includes D and B also includes D: the default behavior (`deduplicate: false`) materializes D twice, reflecting exact textual intent. Under the `--deduplicate` flag, the engine materializes the first occurrence and replaces the second with a `@ref` (simple link).
+* **Failure Handling (`--strict`):** If a referenced URI does not exist in the index:
+  * **Default:** The engine emits a warning to stderr, injects an HTML placeholder in the document (`<!-- mdgraph: broken ref -->`) and continues.
+  * **Strict:** The engine raises a fatal error and aborts the process, guaranteeing integrity for CI/CD pipelines.
+* **Heading Normalization:** The root section is always normalized to H1. Child sections are offset relative to the root level, preserving the original heading hierarchy structure.
+* **Depth Control (`--depth`):** When `depth <= 0`, include directives are discarded (not expanded), enabling shallow materialization for context-budget-aware consumers such as LLM agents.
 
 ---
 
-## 6. Modelagem em Código (Pydantic & Arquitetura)
+## 5. Mathematical Modeling (Graph Theory)
 
-O modelo consolida a visão de *Pipeline*, isolando a delimitação bruta do significado de negócios.
+The documentary ecosystem is modeled as a **General Directed Graph (Digraph)**, defined as $G = (V, E)$. The documented repository may natively contain logical cycles.
+
+* Vertices $v \in V$ carry structural and semantic properties (URI, metadata dict, directives).
+* Edges $E$ are classified by directives ($E_{ref}$, $E_{include}$) and bidirectionally indexed for $O(1)$ lookups.
+* **Acyclic Resolution:** During the materialization operation (`compose`), the traversal algorithm tracks the current execution path ($P$). If an inclusion edge $(x, y)$ is evaluated where $y \in P$, the **cycle is detected and the edge is silently broken in the output**, preventing rendering loops, without altering the original graph topology.
+
+Formal definitions:
+
+$$G = (V, E), \quad E \subseteq V \times V \times \{ref, include, query\}$$
+
+$$\text{neighbors}(v) = \{u \mid (v, u, \cdot) \in E\} \cup \{u \mid (u, v, \cdot) \in E\}$$
+
+$$\text{backlinks}(v) = \{u \mid (u, v, \cdot) \in E\}$$
+
+$$\text{reachable}(v) = \text{BFS}(G, v) \text{ following outgoing edges}$$
+
+$$\text{impact}(v) = \text{BFS}(G^R, v) \text{ following incoming edges (reverse graph)}$$
+
+---
+
+## 6. Code Modeling (Pydantic & Architecture)
+
+The model consolidates the Pipeline view, isolating raw delimitation from business meaning.
 
 ```python
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Dict, Set, Literal
+from typing import List, Any, Dict, Set, Literal
 from collections import defaultdict
 
-# --- Fase 2: Delimitação Física ---
+# --- Phase 2: Physical Delimitation ---
 class RawSection(BaseModel):
-    """Resolve apenas o escopo espacial da seção na AST e no arquivo fonte."""
+    """Resolves only the spatial scope of the section in the AST and source file."""
     heading_level: int
     heading_text: str
     token_start: int
@@ -92,66 +125,434 @@ class RawSection(BaseModel):
     source_start_line: int
     source_end_line: int
 
-# --- Fase 4: Semântica e Diretivas ---
+# --- Phase 4: Semantics and Directives ---
 class Directive(BaseModel):
-    """Diretivas deixam de ser texto e se tornam nós lógicos."""
+    """Directives cease to be text and become logical nodes."""
     type: Literal["ref", "include", "query"]
     target_uri: str
+    label: str | None = None
 
 class ParsedSection(BaseModel):
-    """Resolve o significado. Amarra o espaço físico aos metadados e referências."""
+    """Resolves meaning. Binds physical space to metadata and references."""
     raw: RawSection
     uri: str
     file_path: str
     metadata: Dict[str, Any]
     directives: List[Directive] = Field(default_factory=list)
 
-# --- Fase 5: Indexação e Grafo ---
+# --- Phase 5: Indexing and Graph ---
 class SectionIndex(BaseModel):
-    """Repositório de acesso em O(1) de seções já parseadas."""
+    """O(1) access repository of already-parsed sections."""
     sections: Dict[str, ParsedSection] = Field(default_factory=dict)
 
 class SectionGraph(BaseModel):
-    """Gestão topológica de dependências (Backlinks suportados)."""
+    """Topological dependency management (Backlinks supported)."""
     index: SectionIndex
     outgoing_edges: Dict[str, Set[str]] = Field(default_factory=lambda: defaultdict(set))
     incoming_edges: Dict[str, Set[str]] = Field(default_factory=lambda: defaultdict(set))
-
 ```
 
 ---
 
-## 7. Estratégia de Indexação e Cache
+## 7. Indexing and Cache Strategy
 
-A leitura de repositórios massivos exige que a etapa de *parsing* e validação não ocorra de forma repetitiva durante as consultas.
+Reading massive repositories requires that the parsing and validation step does not occur repetitively during queries.
 
-* **Estado Inicial:** O comando `index_repository()` constrói o `SectionIndex` inteiramente em memória a partir dos arquivos `.md`.
-* **Persistência (Evolução):** Após a estabilização do núcleo, o `SectionIndex` tipado será serializado no cache `.mdgraph/index.json`.
-* **Otimização:** Execuções subsequentes carregarão o `.json` e reavaliarão a AST apenas para os arquivos cujos *hashes* no sistema operacional apresentarem diferenças em relação ao cache.
+* **Initial State:** The `index_repository()` command builds the `SectionIndex` entirely in memory from `.md` files.
+* **Persistence:** After core stabilization, the typed `SectionIndex` is serialized to the cache at `.mdgraph/index.json`.
+* **Optimization:** Subsequent executions load the `.json` and re-evaluate the AST only for files whose OS hashes differ from the cache (SHA-256 incremental cache).
 
 ---
 
-## 8. Interface da CLI (Casos de Uso)
+## 8. CLI Interface (Use Cases)
 
-O motor responde a três comandos principais, alinhados à sua dupla representação (Documental vs Semântica):
+The engine responds to commands aligned with its dual representation (Documentary vs Semantic).
 
-### 8.1. `mdgraph get <URI>` (Fidelidade Documental)
+### 8.1. `mdgraph get <URI>` (Documentary Fidelity)
 
-Extrai uma seção isolada baseando-se estritamente na representação espacial (`source_start_line` e `source_end_line`).
+Extracts an isolated section based strictly on the spatial representation (`source_start_line` and `source_end_line`).
 
-* **Mecânica:** O motor abre o arquivo fonte, fatia as linhas especificadas no objeto `RawSection` e joga para o `stdout`.
-* **Garantia:** Preservação milimétrica de formatação original, comentários e espaços. Nada passa pelo reconstrutor de AST.
+* **Mechanics:** The engine opens the source file, slices the lines specified in the `RawSection` object, and writes to stdout.
+* **Guarantee:** Millimetric preservation of original formatting, comments, and spaces. Nothing passes through the AST reconstructor.
+* **Flags:** `--json` outputs `{"uri": "...", "content": "..."}`.
 
-### 8.2. `mdgraph tree <URI>` (Visão Estrutural)
+### 8.2. `mdgraph tree <URI>` (Structural View)
 
-Consulta o Grafo em memória e resolve a hierarquia visual baseada na semântica.
+Queries the in-memory Graph and resolves the visual hierarchy based on semantics.
 
-* **Saída:** Árvore de dependências ilustrativa no terminal. Suporta `--refs` para exibir conexões que apontam para a URI solicitada (Inversão de Dependência).
+* **Output:** Illustrative dependency tree in the terminal. Supports `--refs` to display connections pointing to the requested URI (Dependency Inversion). Supports `--depth N` to limit traversal depth.
+* **Flags:** `--json` outputs a structured tree object.
 
-### 8.3. `mdgraph compose <URI>` (Materialização Semântica)
+### 8.3. `mdgraph compose <URI>` (Semantic Materialization)
 
-O motor entra em modo *transpiler*. Baseando-se na AST da `ParsedSection`, ele navega de *token* em *token*.
+The engine enters transpiler mode. Based on the `ParsedSection` AST, it navigates token by token.
 
-* Ao encontrar texto normal: repassa o *token*.
-* Ao encontrar um nó `IncludeDirective`: interrompe o fluxo, busca a AST alvo, injeta na cadeia resolvendo o nível matemático dos *headings*, e retoma a varredura.
-* **Comportamento:** Retorna um grande documento unificado, suportando as *flags* `--deduplicate` e `--strict`. O resultado da árvore composta pode ser opcionalmente exportado via `--json` para integrações de infraestrutura.
+* Upon encountering regular text: passes the token through.
+* Upon encountering an `IncludeDirective` node: interrupts the flow, fetches the target AST, injects it resolving heading levels mathematically, and resumes scanning.
+* **Flags:** `--deduplicate`, `--strict`, `--depth N`, `--json`.
+
+### 8.4. `mdgraph validate [--root <path>]` (Integrity Validation)
+
+Scans the full repository graph and reports all structural integrity issues without modifying any file.
+
+* **Checks performed:**
+  * Broken `@ref` and `@include` targets (URIs not found in the index)
+  * Duplicate section IDs within the same repository
+  * Include cycles (detected via DFS execution path tracking)
+  * Sections without required `section:` payload
+* **Exit codes:** 0 = clean, 1 = errors found
+* **Flags:** `--json` outputs `{"errors": [...], "warnings": [...], "summary": {...}}`.
+
+---
+
+## 9. Semantic Memory Model
+
+`mdgraph` is designed to function as a **deterministic graph-based semantic memory layer** for AI agents, not merely as a document composition tool for human authors.
+
+### 9.1. Design Principles for Agent Consumption
+
+* **Stable URIs as Knowledge Addresses:** Every section has a globally stable URI (`file.md#id`). An agent can store, retrieve, and reference knowledge nodes by URI across sessions without re-discovery overhead.
+* **YAML Payload as Semantic Index:** The `section:` block doubles as a structured semantic index. Fields such as `title`, `tags`, `owner`, and custom keys enable graph-based search and filtering without full-text parsing.
+* **Document vs. Context Materialization:** `mdgraph compose` produces a *document* (full fidelity, for human reading). `mdgraph context` and `mdgraph context-compose` produce *context payloads* (bounded, token-budget-aware, for LLM consumption).
+* **Reproducibility:** All CLI commands are deterministic given the same graph state. Agents can cache URIs, tree structures, and composed outputs with confidence.
+* **Bounded Retrieval:** The `--depth` flag enables agents to control retrieval scope, preventing context window overflow on large graphs.
+
+### 9.2. Agent Interaction Patterns
+
+| Pattern | Command | Use case |
+|---------|---------|----------|
+| Direct lookup | `get <URI>` | Retrieve raw section content by known URI |
+| Neighbor discovery | `tree <URI>` | Explore what a node connects to |
+| Context assembly | `context <URI>` | Get structured metadata + immediate neighbors |
+| Full materialization | `compose <URI>` | Expand a document tree into a single artifact |
+| Impact analysis | `impact <URI>` | Find all nodes affected by a change |
+| Semantic search | `search <predicate>` | Find nodes by metadata attributes |
+| Integrity check | `validate` | Verify graph health before agent operations |
+
+---
+
+## 10. Extended Graph Operations
+
+This section specifies the mathematical semantics and complexity of each extended CLI command.
+
+### 10.1. `mdgraph validate`
+
+$$f: G \to \text{ValidationReport}$$
+
+Full graph scan. Collects all structural violations without mutation.
+
+* **Algorithm:** Full DFS traversal of $G$; set membership checks for duplicate IDs; execution-path tracking for cycle detection.
+* **Complexity:** $O(V + E)$
+* **Output schema:**
+```json
+{
+  "errors": [{"type": "broken_ref|broken_include|duplicate_id|missing_payload|cycle", "uri": "...", "detail": "..."}],
+  "warnings": [{"type": "...", "uri": "...", "detail": "..."}],
+  "summary": {"total_sections": 0, "errors": 0, "warnings": 0}
+}
+```
+
+### 10.2. `mdgraph context <URI>`
+
+$$f: G \times v \to \text{ContextPayload}$$
+
+Returns the structured context of a single node: its metadata, outgoing edges, and incoming edges (1-hop neighborhood).
+
+* **Algorithm:** Direct index lookup + adjacency list read.
+* **Complexity:** $O(\deg(v))$
+* **Output schema:**
+```json
+{
+  "uri": "...",
+  "metadata": {},
+  "outgoing": [{"uri": "...", "type": "ref|include"}],
+  "incoming": [{"uri": "...", "type": "ref|include"}]
+}
+```
+
+### 10.3. `mdgraph backlinks <URI>`
+
+$$f: G \times v \to V_{in}$$
+
+Returns all nodes with a directed edge pointing to $v$.
+
+* **Algorithm:** Direct $O(1)$ lookup in `incoming_edges[v]`.
+* **Complexity:** $O(1)$ lookup, $O(k)$ output where $k = |\text{backlinks}(v)|$
+* **Output schema:**
+```json
+{"uri": "...", "backlinks": [{"uri": "...", "type": "ref|include"}]}
+```
+
+### 10.4. `mdgraph search <predicate>`
+
+$$f: G \times \text{Predicate} \to V$$
+
+Scans all nodes and returns those matching a metadata predicate.
+
+* **Predicate syntax:** `key=value` (exact match), `key~=value` (substring match), `tag:value` (tag membership).
+* **Algorithm:** Linear scan of all `ParsedSection.metadata` dicts.
+* **Complexity:** $O(V)$
+* **Output schema:**
+```json
+{"predicate": "...", "results": [{"uri": "...", "metadata": {}}]}
+```
+
+### 10.5. `mdgraph impact <URI>`
+
+$$f: G \times v \to \{V_{direct}, V_{indirect}\}$$
+
+Returns the set of all nodes that depend (directly or indirectly) on $v$ via the reverse graph $G^R$.
+
+* **Algorithm:** BFS on $G^R$ starting at $v$.
+* **Complexity:** $O(V + E)$
+* **Output schema:**
+```json
+{
+  "uri": "...",
+  "direct": [{"uri": "..."}],
+  "indirect": [{"uri": "..."}]
+}
+```
+
+### 10.6. `mdgraph neighbors <URI> [--depth N]`
+
+$$f: G \times v \times d \to V$$
+
+Returns all nodes reachable from $v$ within $d$ hops in either direction.
+
+* **Algorithm:** Bidirectional BFS from $v$, bounded by depth $d$.
+* **Complexity:** $O(V + E)$ worst case; in practice bounded by graph diameter x branching factor.
+* **Output schema:**
+```json
+{"uri": "...", "depth": 2, "neighbors": [{"uri": "...", "distance": 1, "direction": "outgoing|incoming"}]}
+```
+
+### 10.7. `mdgraph explain <URI_A> <URI_B>`
+
+$$f: G \times v_a \times v_b \to \text{Paths}$$
+
+Finds all simple paths between two nodes.
+
+* **Algorithm:** DFS with backtracking, tracking visited set per path to avoid re-visits.
+* **Complexity:** Exponential worst case; in practice bounded by graph structure.
+* **Output schema:**
+```json
+{"from": "...", "to": "...", "paths": [[{"uri": "..."}]]}
+```
+
+### 10.8. `mdgraph diff <URI> [--since <git-ref>]`
+
+$$f: G_{current} \times G_{historical} \to \Delta$$
+
+Computes the structural difference between the current graph state and a historical snapshot.
+
+* **Algorithm:** Set difference on $(V, E)$ between two index states. Historical state is reconstructed from git history.
+* **Complexity:** $O(V + E)$
+* **Output schema:**
+```json
+{
+  "added_sections": [{"uri": "..."}],
+  "removed_sections": [{"uri": "..."}],
+  "added_edges": [{"from": "...", "to": "..."}],
+  "removed_edges": [{"from": "...", "to": "..."}]
+}
+```
+
+### 10.9. `mdgraph query <expression>`
+
+$$f: G \times \text{BooleanExpr} \to V$$
+
+Advanced boolean query over section metadata. Supports AND, OR, NOT operators.
+
+* **Syntax:** `tag:api AND owner:team-core NOT status:obsolete`
+* **Algorithm:** Parse expression tree; evaluate each node against metadata dict.
+* **Complexity:** $O(V \cdot |expr|)$
+* **Output schema:**
+```json
+{"expression": "...", "results": [{"uri": "...", "metadata": {}}]}
+```
+
+### 10.10. `mdgraph context-compose <URI> [--depth N] [--token-limit N]`
+
+$$f: G \times v \times d \times t \to \text{ContextPayload}$$
+
+Bounded semantic materialization for LLM agent consumption. Composes the node tree up to depth $d$ and truncates the output to fit within a token budget $t$.
+
+* **Algorithm:** DFS composition (same as `compose`) with an incremental token counter. Stops expansion when budget is approached; appends truncation markers.
+* **Complexity:** $O(V + E)$ bounded by depth and token limit.
+* **Output schema:**
+```json
+{
+  "uri": "...",
+  "depth": 2,
+  "token_estimate": 1240,
+  "truncated": false,
+  "content": "..."
+}
+```
+
+---
+
+## 11. JSON Contract Schemas
+
+All commands support a `--json` flag that produces machine-readable output. The schemas below are the normative contracts for all JSON outputs.
+
+### 11.1. `mdgraph get <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "file_path": "string",
+  "source_start_line": "integer",
+  "source_end_line": "integer",
+  "content": "string"
+}
+```
+
+### 11.2. `mdgraph tree <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "tree": [
+    {
+      "uri": "string",
+      "type": "ref | include",
+      "depth": "integer",
+      "children": []
+    }
+  ]
+}
+```
+
+### 11.3. `mdgraph compose <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "depth": "integer | null",
+  "deduplicate": "boolean",
+  "content": "string"
+}
+```
+
+### 11.4. `mdgraph validate --json`
+
+```json
+{
+  "errors": [
+    {
+      "type": "broken_ref | broken_include | duplicate_id | missing_payload | cycle",
+      "uri": "string",
+      "detail": "string"
+    }
+  ],
+  "warnings": [
+    {
+      "type": "string",
+      "uri": "string",
+      "detail": "string"
+    }
+  ],
+  "summary": {
+    "total_sections": "integer",
+    "total_edges": "integer",
+    "errors": "integer",
+    "warnings": "integer"
+  }
+}
+```
+
+### 11.5. `mdgraph context <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "metadata": "object",
+  "outgoing": [{"uri": "string", "type": "ref | include"}],
+  "incoming": [{"uri": "string", "type": "ref | include"}]
+}
+```
+
+### 11.6. `mdgraph backlinks <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "backlinks": [{"uri": "string", "type": "ref | include"}]
+}
+```
+
+### 11.7. `mdgraph search <predicate> --json`
+
+```json
+{
+  "predicate": "string",
+  "results": [{"uri": "string", "metadata": "object"}]
+}
+```
+
+### 11.8. `mdgraph impact <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "direct": [{"uri": "string"}],
+  "indirect": [{"uri": "string"}]
+}
+```
+
+### 11.9. `mdgraph neighbors <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "depth": "integer",
+  "neighbors": [{"uri": "string", "distance": "integer", "direction": "outgoing | incoming"}]
+}
+```
+
+### 11.10. `mdgraph explain <URI_A> <URI_B> --json`
+
+```json
+{
+  "from": "string",
+  "to": "string",
+  "paths": [
+    [{"uri": "string", "edge_type": "ref | include"}]
+  ]
+}
+```
+
+### 11.11. `mdgraph diff --json`
+
+```json
+{
+  "since": "string",
+  "added_sections": [{"uri": "string"}],
+  "removed_sections": [{"uri": "string"}],
+  "added_edges": [{"from": "string", "to": "string", "type": "string"}],
+  "removed_edges": [{"from": "string", "to": "string", "type": "string"}]
+}
+```
+
+### 11.12. `mdgraph query <expression> --json`
+
+```json
+{
+  "expression": "string",
+  "results": [{"uri": "string", "metadata": "object"}]
+}
+```
+
+### 11.13. `mdgraph context-compose <URI> --json`
+
+```json
+{
+  "uri": "string",
+  "depth": "integer",
+  "token_estimate": "integer",
+  "truncated": "boolean",
+  "content": "string"
+}
+```

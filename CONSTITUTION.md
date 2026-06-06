@@ -1,159 +1,168 @@
-# CONSTITUION - Graph.md
+# CONSTITUTION - graph.md
 
-Versao: 1.0
-Status: Ativa
+Version: 1.1
+Status: Active
 Owner: gresendesa
-Idioma oficial: pt-BR
+Official language: English
 
-## 1. Proposito
+## 0. Official Language
 
-Criar uma ferramenta cli conforme specification.md.
+The official language of this project is **English**.
 
-## 2. Regras Nao Negociaveis
+All documentation, specification, code comments, commit messages, and scrum files
+must be written in English. The only exceptions are:
+- Conversations with the PO (owner), which may occur in any language.
+- Legacy content predating this constitution version, which will be migrated progressively.
 
-1. Nenhuma entrega e concluida sem teste manual documentado.
-2. Nenhuma entrega e concluida sem checklist de regressao executado.
-3. Testes sao obrigatorios no processo de desenvolvimento.
-4. Commit de sprint so ocorre apos aceite explicito do PO.
-5. Encerramento tecnico deve seguir um commit por sprint em cada repositorio envolvido.
+## 1. Purpose
 
-## 3. Prioridade Estrategica
+Build a CLI tool as specified in specification.md.
 
-Ordem de prioridade atual:
-1. Implementação e documentação
+## 2. Non-Negotiable Rules
 
-## 4. Politica de Branch e Mudanca
+1. No delivery is complete without documented manual testing.
+2. No delivery is complete without a regression checklist executed.
+3. Automated tests are mandatory in the development process.
+4. Sprint commits only occur after explicit PO acceptance.
+5. Technical closure must follow one commit per sprint per repository involved.
 
-Modelo de branch:
-- Git Flow simplificado.
+## 3. Strategic Priority
 
-Aprovacao de mudancas:
-- Apenas o owner aprova mudancas na constituicao e diretrizes de memoria.
+Current priority order:
+1. Implementation and documentation
 
-Risco de release aceito:
-- Medio (ajustes pos-release sao aceitos quando necessarios).
+## 4. Branch and Change Policy
 
-## 4.1 Convencao de nomenclatura
+Branch model:
+- Simplified Git Flow.
 
-Padrao oficial de IDs:
+Change approval:
+- Only the owner approves changes to the constitution and memory guidelines.
 
-1. Itens de backlog
-- Formato: B-XXX
-- Exemplo: B-001
+Accepted release risk:
+- Medium (post-release adjustments are accepted when necessary).
+
+## 4.1 Naming Convention
+
+Official ID standards:
+
+1. Backlog items
+- Format: B-XXX
+- Example: B-001
 
 2. Sprints
-- Formato: SPR-YYYY-NN
-- Exemplo: SPR-2026-01
+- Format: SPR-YYYY-NN
+- Example: SPR-2026-01
 
-3. Tarefas internas da sprint
-- Formato: S{N}-TXX
-- Exemplo: S1-T03
+3. Sprint internal tasks
+- Format: S{N}-TXX
+- Example: S1-T03
 
-Regras:
-- IDs nao podem ser reutilizados.
-- IDs descontinuados devem ser marcados como obsolete.
-- Qualquer novo item deve nascer com ID antes de entrar em doing.
+Rules:
+- IDs cannot be reused.
+- Discontinued IDs must be marked as obsolete.
+- Any new item must have an ID before entering doing.
 
 ## 5. Definition of Done (DoD)
 
-Para marcar qualquer item como concluido, e obrigatorio:
-1. Teste manual documentado.
-2. Checklist de regressao executado.
-3. Registro atualizado em arquivos de memoria do projeto em scrum/.
-4. Validacao manual executada sobre containers rebuildados/reinstanciados no fechamento da sprint.
-5. Commit final apenas apos aceite explicito do PO com sistema em execucao.
-6. Testes automatizados em `tests/` executados com sucesso (sem falhas).
+To mark any item as done, the following is mandatory:
+1. Documented manual test.
+2. Regression checklist executed.
+3. Records updated in project memory files under scrum/.
+4. Manual validation executed on rebuilt/reinstantiated containers at sprint close.
+5. Final commit only after explicit PO acceptance with system running.
+6. Automated tests in `tests/` executed successfully (no failures).
 
-## 5.2 Gate de encerramento de sprint (obrigatorio)
+## 5.2 Sprint Closure Gate (mandatory)
 
-No encerramento da sprint, e obrigatorio:
-1. rebuildar imagens locais com tag estavel (sem criar imagem por sprint)
-2. derrubar instancia anterior e subir nova instancia para validacao
-3. obter aceite explicito do PO em ambiente em execucao
-4. executar um commit por sprint em cada repositorio envolvido no recorte
+At sprint closure, the following is mandatory:
+1. Rebuild local images with a stable tag (do not create an image per sprint).
+2. Tear down previous instance and bring up new instance for validation.
+3. Obtain explicit PO acceptance in a running environment.
+4. Execute one commit per sprint per repository involved in the scope.
 
-## 5.1 Sprint planning (obrigatorio)
+## 5.1 Sprint Planning (mandatory)
 
-Toda sprint deve passar por planning formal, conduzido pelo agente com participacao do owner.
+Every sprint must go through a formal planning session, conducted by the agent with owner participation.
 
-No planning, e obrigatorio:
-1. perguntar ao PO a prioridade dos itens elegiveis do backlog
-2. registrar/atualizar o campo Prioridade PO no backlog
-3. recortar itens do backlog para sprint respeitando a prioridade do PO
-4. decompor itens em tarefas tecnicas
-5. calcular risco por tarefa e risco agregado da sprint
-6. definir ordem de execucao
-7. registrar bloqueios previstos e mitigacoes
+Planning requirements:
+1. Ask the PO for the priority of eligible backlog items.
+2. Record/update the PO Priority field in the backlog.
+3. Select backlog items for the sprint respecting PO priority.
+4. Break items into technical tasks.
+5. Calculate risk per task and aggregate sprint risk.
+6. Define execution order.
+7. Record anticipated blockers and mitigations.
 
-Escala de Prioridade PO:
-- 1 = critica
-- 2 = alta
-- 3 = media
-- 4 = baixa
+PO Priority scale:
+- 1 = critical
+- 2 = high
+- 3 = medium
+- 4 = low
 
-Regra:
-- Nenhum item entra em sprint sem Prioridade PO definida.
+Rule:
+- No item enters a sprint without a defined PO Priority.
 
-Escala de risco por tarefa:
-- baixo = 1
-- medio = 2
-- alto = 3
+Task risk scale:
+- low = 1
+- medium = 2
+- high = 3
 
-Calculo do risco da sprint:
-- media ponderada simples dos riscos das tarefas selecionadas
-- classificacao final:
-	- <= 1.4: baixo
-	- > 1.4 e <= 2.3: medio
-	- > 2.3: alto
+Sprint risk calculation:
+- Simple weighted average of selected task risks.
+- Final classification:
+  - <= 1.4: low
+  - > 1.4 and <= 2.3: medium
+  - > 2.3: high
 
-## 6. Gestao de Memoria do Agente
+## 6. Agent Memory Management
 
-A pasta scrum/ e a memoria operacional do projeto e deve seguir estas regras:
+The scrum/ folder is the operational memory of the project and must follow these rules:
 
 1. backlog.md
-- Deve atuar como consolidador sintetico do backlog.
-- Deve conter apenas ID, titulo, status, prioridade PO, risco e ponteiro para arquivo detalhado.
+- Must act as a synthetic backlog consolidator.
+- Must contain only ID, title, status, PO priority, risk, and pointer to the detailed file.
 
 2. backlog/B-XXX.md
-- Cada item de backlog deve ter um arquivo proprio em scrum/backlog/.
-- O arquivo detalhado deve conter escopo, criterios de aceite, dependencias, owner e historico de atualizacao.
+- Each backlog item must have its own file under scrum/backlog/.
+- The detailed file must contain scope, acceptance criteria, dependencies, owner, and update history.
 
 3. sprint.md
-- Deve atuar como consolidador sintetico das sprints.
-- Deve conter apenas status resumido, foco, risco e ponteiro para arquivo detalhado.
+- Must act as a synthetic sprint consolidator.
+- Must contain only summary status, focus, risk, and pointer to the detailed file.
 
 4. sprint/SPR-YYYY-NN.md
-- Cada sprint deve ter um arquivo proprio em scrum/sprint/.
-- O arquivo detalhado deve conter planning, tarefas, risco, execucao, bloqueios e encerramento.
+- Each sprint must have its own file under scrum/sprint/.
+- The detailed file must contain planning, tasks, risk, execution, blockers, and closure.
 
 6. experience.md
-- Deve ser atualizado em toda retrospectiva ou incidente relevante.
-- Deve registrar problema, causa raiz, acao corretiva e prevencao.
+- Must be updated at every relevant retrospective or incident.
+- Must record problem, root cause, corrective action, and prevention.
 
 7. decisions.md
-- Deve manter historico de decisoes sobre a arquitetura da memoria e governanca do processo.
-- Cada decisao deve registrar contexto, escolha, impacto e data.
+- Must maintain a history of decisions about memory architecture and process governance.
+- Each decision must record context, choice, impact, and date.
 
-8. Historico
-- O historico nao deve ser apagado.
-- Conteudos antigos devem ser marcados como obsoletos, com data e motivo.
+8. History
+- History must not be deleted.
+- Old content must be marked as obsolete, with date and reason.
 
-## 7. Padrao de Registro
+## 7. Record Standard
 
-Todo registro em scrum/ deve incluir:
+Every record in scrum/ must include:
 - status
 - owner
-- data de criacao
-- data de ultima atualizacao
+- creation date
+- last updated date
 
-Status padrao:
+Default statuses:
 - todo
 - doing
 - blocked
 - done
 - obsolete
 
-## 8. Vigencia e Alteracoes
+## 8. Validity and Changes
 
-Esta constituicao entra em vigor imediatamente.
-Qualquer alteracao exige aprovacao explicita do owner.
+This constitution takes effect immediately.
+Any change requires explicit owner approval.

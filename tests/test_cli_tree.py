@@ -1,6 +1,7 @@
 """
-Testes do comando CLI 'mdgraph tree' (B-006).
+Testes do comando CLI 'mdgraph tree' (B-006, B-025).
 """
+import json
 from pathlib import Path
 
 import pytest
@@ -112,3 +113,44 @@ class TestTreeDepth:
         assert len(lines) == 1
         assert "conceito-a" in lines[0]
         assert "intro" not in result.output
+
+
+class TestTreeJson:
+    def test_tree_json_exits_zero(self):
+        result = runner.invoke(
+            app, ["tree", _uri("intro.md", "intro"), "--root", str(REPO), "--json"]
+        )
+        assert result.exit_code == 0
+
+    def test_tree_json_schema_keys(self):
+        result = runner.invoke(
+            app, ["tree", _uri("intro.md", "intro"), "--root", str(REPO), "--json"]
+        )
+        data = json.loads(result.output)
+        assert "uri" in data
+        assert "tree" in data
+        assert isinstance(data["tree"], list)
+
+    def test_tree_json_uri_matches(self):
+        uri = _uri("intro.md", "intro")
+        result = runner.invoke(app, ["tree", uri, "--root", str(REPO), "--json"])
+        data = json.loads(result.output)
+        assert data["uri"] == uri
+
+    def test_tree_json_children_have_uri(self):
+        result = runner.invoke(
+            app, ["tree", _uri("intro.md", "intro"), "--root", str(REPO), "--json"]
+        )
+        data = json.loads(result.output)
+        if data["tree"]:
+            child = data["tree"][0]
+            assert "uri" in child
+            assert "type" in child
+            assert "children" in child
+
+    def test_tree_json_depth_0_empty_tree(self):
+        result = runner.invoke(
+            app, ["tree", _uri("intro.md", "intro"), "--root", str(REPO), "--json", "--depth", "0"]
+        )
+        data = json.loads(result.output)
+        assert data["tree"] == []

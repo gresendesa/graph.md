@@ -1,55 +1,60 @@
-# Backlog - Consolidador
+# Backlog - Consolidator
 
-Status do documento: ativo
+Document status: active
 Owner: gresendesa
-Data de criacao: 2026-04-08
-Ultima atualizacao: 2026-06-06
+Creation date: 2026-04-08
+Last updated: 2026-06-06
 
-## Objetivo
+## Purpose
 
-Este arquivo e um consolidado sintetico dos itens de backlog.
+This file is a synthetic consolidator of backlog items.
 
-Detalhes completos de cada item ficam em arquivos dedicados no diretorio scrum/backlog/.
+Full details for each item are in dedicated files under scrum/backlog/.
 
-## Convencao
+## Convention
 
-- Item de backlog: B-XXX
-- Arquivo detalhado: scrum/backlog/B-XXX.md
+- Backlog item: B-XXX
+- Detailed file: scrum/backlog/B-XXX.md
 
-## Resumo sintetico dos itens
+## Summary
 
-### Concluidos
+### Completed
 
-(nenhum)
-
-### Em andamento
-
-(nenhum)
-
-### Concluidos
-
-| ID    | Titulo                                       | Sprint      |
+| ID    | Title                                        | Sprint      |
 |-------|----------------------------------------------|-------------|
-| B-001 | Setup do projeto e modelos de dados          | SPR-2026-01 |
-| B-002 | Parser Markdown e descoberta de secoes       | SPR-2026-01 |
-| B-003 | Tokenizacao de diretivas (@ref, @include)    | SPR-2026-01 |
-| B-004 | Indexacao do repositorio e grafo             | SPR-2026-01 |
-| B-005 | CLI - comando mdgraph get                    | SPR-2026-01 |
-| B-006 | CLI - comando mdgraph tree                   | SPR-2026-01 |
-| B-007 | CLI - comando mdgraph compose                | SPR-2026-01 |
-| B-008 | Deteccao e resolucao de ciclos               | SPR-2026-01 |
-| B-009 | Cache persistente do indice                  | SPR-2026-01 |
-| B-010 | README e diretorio de exemplos               | SPR-2026-01 |
-| B-011 | Sintaxe de diretivas renderizavel como link MD | SPR-2026-02 |
-| B-012 | Profundidade configuravel no comando tree      | SPR-2026-03 |
-| B-013 | Sintaxe yaml para bloco de metadados de secao  | SPR-2026-04 |
+| B-001 | Project setup and data models                | SPR-2026-01 |
+| B-002 | Markdown parser and section discovery        | SPR-2026-01 |
+| B-003 | Directive tokenization (@ref, @include)      | SPR-2026-01 |
+| B-004 | Repository indexing and graph                | SPR-2026-01 |
+| B-005 | CLI - mdgraph get command                    | SPR-2026-01 |
+| B-006 | CLI - mdgraph tree command                   | SPR-2026-01 |
+| B-007 | CLI - mdgraph compose command                | SPR-2026-01 |
+| B-008 | Cycle detection and resolution               | SPR-2026-01 |
+| B-009 | Persistent index cache                       | SPR-2026-01 |
+| B-010 | README and examples directory                | SPR-2026-01 |
+| B-011 | Directive syntax renderable as MD link       | SPR-2026-02 |
+| B-012 | Configurable depth in tree command           | SPR-2026-03 |
+| B-013 | YAML syntax for section metadata block       | SPR-2026-04 |
+| B-014 | Translate docs + expand specification.md §1–§11 | SPR-2026-05 (partial) |
+| B-015 | mdgraph validate                             | SPR-2026-05 |
+| B-025 | --json flag for get and tree                 | SPR-2026-05 |
 
-### Pendentes
+### Pending
 
-(nenhum)
+| ID    | Title                                               | PO Priority   | Risk  | Tier       | Deps         |
+|-------|-----------------------------------------------------|---------------|-------|------------|--------------|
+| B-016 | mdgraph context: structured node context for agents | 1 (critical)  | 2     | IA v1      | B-004        |
+| B-017 | mdgraph backlinks: dedicated backlinks command      | 2 (high)      | 1     | IA v1      | B-004        |
+| B-018 | mdgraph search: metadata-based graph search         | 1 (critical)  | 2     | IA v1      | B-004,B-013  |
+| B-019 | mdgraph impact: reverse BFS affected nodes          | 1 (critical)  | 2     | IA v1      | B-004        |
+| B-020 | mdgraph neighbors: graph neighborhood exploration   | 2 (high)      | 1     | IA v2      | B-004        |
+| B-021 | mdgraph explain: find paths between nodes           | 2 (high)      | 2     | IA v2      | B-004        |
+| B-022 | mdgraph diff: structural diff against git history   | 2 (high)      | 3     | IA v2      | B-004        |
+| B-023 | mdgraph query: advanced metadata query language     | 2 (high)      | 3     | IA v2      | B-018        |
+| B-024 | mdgraph context-compose: LLM context materialization| 1 (critical)  | 2     | IA v2      | B-007,B-016  |
 
-### Planejados (SPR-2026-01)
+### Planned
 
-(nenhum - todos os itens concluidos)
+(none — all items concluded or pending)
 
-## Template sintetico para novos itens
+## Template for new items

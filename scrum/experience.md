@@ -1,27 +1,27 @@
-# Experience - Retrospectiva e Memoria de Processo
+# Experience - Retrospective and Process Memory
 
-Status do documento: ativo
+Document status: active
 Owner: gresendesa
-Data de criacao: 2026-04-08
-Ultima atualizacao:
+Creation date: 2026-04-08
+Last updated:
 
-## Objetivo
+## Purpose
 
-Registrar problemas observados no processo de desenvolvimento, suas causas e como evitar recorrencia.
+Record observed problems in the development process, their causes, and how to prevent recurrence.
 
-## Formato de registro
+## Record format
 
 - ID:
-- Data:
-- Contexto:
-- Problema:
-- Impacto:
-- Causa raiz:
-- Acao corretiva:
-- Acao preventiva:
-- Status: aberto | mitigado | resolvido | obsoleto
+- Date:
+- Context:
+- Problem:
+- Impact:
+- Root cause:
+- Corrective action:
+- Preventive action:
+- Status: open | mitigated | resolved | obsolete
 - Owner:
 
-## Registros
+## Records
 
 ---
