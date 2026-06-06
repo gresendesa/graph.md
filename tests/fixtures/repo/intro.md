@@ -5,4 +5,4 @@ id: intro
 title: Introducao
 ```
 
-Texto de introducao. Veja @ref(conceitos.md#conceito-a).
+Texto de introducao. Veja [@ref: conceito-a](conceitos.md#conceito-a).

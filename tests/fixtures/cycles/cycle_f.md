@@ -6,4 +6,4 @@ id: no-f
 
 Conteudo de F.
 
-@include(cycle_d.md#no-d)
+[@include: no-d](cycle_d.md#no-d)

@@ -4,6 +4,6 @@
 id: multi
 ```
 
-Primeiro @ref(a.md#x).
+Primeiro [@ref: x](a.md#x).
 
-Depois @include(b.md#y) e @query(tag=foo).
+Depois [@include: y](b.md#y) e [@query: foo](tag=foo).

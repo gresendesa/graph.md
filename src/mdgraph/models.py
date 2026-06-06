@@ -30,6 +30,7 @@ class Directive(BaseModel):
 
     type: Literal["ref", "include", "query"]
     target_uri: str
+    label: str | None = None
 
 
 class ParsedSection(BaseModel):

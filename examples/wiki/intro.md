@@ -13,6 +13,6 @@ Bem-vindo ao wiki de exemplo do `mdgraph`.
 Esta pagina e a raiz do repositorio. Ela referencia conceitos fundamentais
 e inclui o guia de instalacao completo.
 
-Para entender os conceitos basicos, veja @ref(conceitos/basico.md#basico).
+Para entender os conceitos basicos, veja [@ref: Conceito Basico](conceitos/basico.md#basico).
 
-@include(guia/instalacao.md#instalacao)
+[@include: Guia de Instalacao](guia/instalacao.md#instalacao)

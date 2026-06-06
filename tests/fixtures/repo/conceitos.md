@@ -5,7 +5,7 @@ id: conceito-a
 title: Conceito A
 ```
 
-Definicao do conceito A. Inclui @include(sub/detalhe.md#detalhe).
+Definicao do conceito A. Inclui [@include: detalhe](sub/detalhe.md#detalhe).
 
 # Conceito B
 

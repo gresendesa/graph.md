@@ -4,4 +4,4 @@
 id: com-include
 ```
 
-@include(../outros/base.md#intro)
+[@include: intro](../outros/base.md#intro)

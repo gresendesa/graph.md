@@ -3,7 +3,7 @@
 Status do documento: ativo
 Owner: gresendesa
 Data de criacao: 2026-04-08
-Ultima atualizacao: 2026-06-05
+Ultima atualizacao: 2026-06-06
 
 ## Objetivo
 
@@ -40,6 +40,7 @@ Detalhes completos de cada item ficam em arquivos dedicados no diretorio scrum/b
 | B-008 | Deteccao e resolucao de ciclos               | SPR-2026-01 |
 | B-009 | Cache persistente do indice                  | SPR-2026-01 |
 | B-010 | README e diretorio de exemplos               | SPR-2026-01 |
+| B-011 | Sintaxe de diretivas renderizavel como link MD | SPR-2026-02 |
 
 ### Pendentes
 

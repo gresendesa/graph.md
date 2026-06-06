@@ -12,7 +12,7 @@ from mdgraph.directives import _resolve_uri
 from mdgraph.models import SectionGraph
 
 _PLACEHOLDER_TPL = "<!-- mdgraph:unresolved uri=\"{uri}\" -->"
-_INCLUDE_RE = re.compile(r"^@include\(([^)]+)\)\s*$")
+_INCLUDE_RE = re.compile(r"^\[@include(?::[^\]]*)?\]\(([^)]+)\)\s*$")
 
 
 def compose(

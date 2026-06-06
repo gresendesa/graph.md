@@ -6,4 +6,4 @@ id: no-a
 
 Conteudo de A.
 
-@include(cycle_b.md#no-b)
+[@include: no-b](cycle_b.md#no-b)

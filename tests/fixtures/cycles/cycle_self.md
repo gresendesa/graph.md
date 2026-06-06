@@ -6,4 +6,4 @@ id: auto
 
 Conteudo.
 
-@include(cycle_self.md#auto)
+[@include: auto](cycle_self.md#auto)

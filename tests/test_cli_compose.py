@@ -25,7 +25,7 @@ def _uri(filename: str, section_id: str) -> str:
 def _make_graph_with_phantom_include():
     from mdgraph.models import ParsedSection, RawSection, SectionGraph, SectionIndex
     with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
-        f.write("# Temp\n\n```section\nid: temp\n```\n\n@include(nao-existe.md#y)\n")
+        f.write("# Temp\n\n```section\nid: temp\n```\n\n[@include: y](nao-existe.md#y)\n")
         tmp_path = f.name
     raw = RawSection(heading_level=1, heading_text="Temp",
                      token_start=0, token_end=6,
@@ -99,8 +99,8 @@ class TestComposeDeduplicate:
         # Arquivo raiz temporario com dois @include para o mesmo filho (caminho absoluto)
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("# Raiz Dup\n\n```section\nid: raiz-dup\n```\n\n"
-                    f"@include({child_path}#filho)\n\n"
-                    f"@include({child_path}#filho)\n")
+                    f"[@include: filho]({child_path}#filho)\n\n"
+                    f"[@include: filho]({child_path}#filho)\n")
             tmp_root = f.name
 
         try:

@@ -12,7 +12,7 @@ Este guia cobre a instalacao completa do sistema.
 
 Antes de comecar, certifique-se de entender o conceito avancado:
 
-@include(../conceitos/avancado.md#avancado)
+[@include: Conceito Avancado](../conceitos/avancado.md#avancado)
 
 ## Pre-requisitos
 

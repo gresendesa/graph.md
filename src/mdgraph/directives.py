@@ -13,8 +13,11 @@ from typing import List
 
 from mdgraph.models import Directive, ParsedSection
 
-# Regex que captura @tipo(uri) — uri pode conter qualquer char exceto ')'
-_DIRECTIVE_RE = re.compile(r"@(ref|include|query)\(([^)]+)\)")
+# Regex que captura [@tipo: label](uri) ou [@tipo](uri)
+# Grupo 1: tipo (ref|include|query)
+# Grupo 2: label opcional (pode ser vazio ou ausente)
+# Grupo 3: uri de destino
+_DIRECTIVE_RE = re.compile(r"\[@(ref|include|query)(?::\s*([^\]]*))?\]\(([^)]+)\)")
 
 
 def _resolve_uri(target: str, source_file_path: str) -> str:
@@ -49,36 +52,50 @@ def _resolve_uri(target: str, source_file_path: str) -> str:
     return str(resolved) + fragment
 
 
+# Regex para o texto do link: @tipo ou @tipo: label
+_LINK_TEXT_RE = re.compile(r"^@(ref|include|query)(?::\s*(.*))?$")
+
+
 def extract_directives(tokens: list, source_file_path: str) -> List[Directive]:
     """
-    Varre tokens buscando texto inline que contenha diretivas @tipo(uri).
-    Retorna a lista de Directive na ordem de ocorrencia.
+    Varre tokens buscando diretivas na sintaxe de link Markdown:
+      [@tipo: label](uri)  ou  [@tipo](uri)
 
-    Em markdown-it-py, tokens `inline` possuem tanto `content` (texto bruto)
-    quanto `children` (sub-tokens ja parseados). Varrer ambos duplicaria os
-    resultados; por isso priorizamos `children` quando presentes.
+    Em markdown-it-py, esse padrao e tokenizado como:
+      link_open (attrs: [["href", uri]])
+      text      (content: "@tipo: label")
+      link_close
+
+    A extracao examina cada link_open dentro de tokens `inline` e verifica
+    se o texto filho corresponde ao padrao de diretiva.
     """
     directives: List[Directive] = []
 
     for tok in tokens:
-        if tok.type != "inline":
+        if tok.type != "inline" or not tok.children:
             continue
-        if tok.children:
-            for child in tok.children:
-                if child.type in ("text", "code_inline") and child.content:
-                    _scan_text(child.content, source_file_path, directives)
-        elif tok.content:
-            _scan_text(tok.content, source_file_path, directives)
+        children = tok.children
+        i = 0
+        while i < len(children):
+            child = children[i]
+            if child.type == "link_open":
+                attrs = child.attrs or {}
+                href = attrs.get("href", "") if isinstance(attrs, dict) else ""
+                # Proximo filho deve ser o texto do link
+                if i + 1 < len(children) and children[i + 1].type == "text":
+                    link_text = children[i + 1].content.strip()
+                    m = _LINK_TEXT_RE.match(link_text)
+                    if m and href:
+                        dtype = m.group(1)
+                        raw_label = m.group(2)
+                        label = raw_label.strip() if raw_label else None
+                        resolved = _resolve_uri(href.strip(), source_file_path)
+                        directives.append(
+                            Directive(type=dtype, target_uri=resolved, label=label)  # type: ignore[arg-type]
+                        )
+            i += 1
 
     return directives
-
-
-def _scan_text(text: str, source_file_path: str, out: List[Directive]) -> None:
-    for match in _DIRECTIVE_RE.finditer(text):
-        dtype = match.group(1)  # "ref" | "include" | "query"
-        raw_uri = match.group(2).strip()
-        resolved = _resolve_uri(raw_uri, source_file_path)
-        out.append(Directive(type=dtype, target_uri=resolved))  # type: ignore[arg-type]
 
 
 def bind_directives(section: ParsedSection, tokens: list) -> ParsedSection:

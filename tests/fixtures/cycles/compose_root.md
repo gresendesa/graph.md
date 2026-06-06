@@ -7,6 +7,6 @@ title: Raiz
 
 Introducao do documento.
 
-@include(compose_child.md#filho)
+[@include: filho](compose_child.md#filho)
 
 Texto apos o include.

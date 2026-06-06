@@ -4,4 +4,4 @@
 id: com-ref
 ```
 
-Veja @ref(outro.md#alvo) para mais detalhes.
+Veja [@ref: alvo](outro.md#alvo) para mais detalhes.

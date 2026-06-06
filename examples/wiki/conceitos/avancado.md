@@ -8,7 +8,7 @@ owner: exemplo
 tags: [conceito, avancado]
 ```
 
-O conceito avancado estende o @ref(basico.md#basico).
+O conceito avancado estende o [@ref: Conceito Basico](basico.md#basico).
 
 Ele adiciona comportamentos compostos e pode ser incluido em documentos de nivel superior.
 

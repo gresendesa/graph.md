@@ -3,7 +3,7 @@
 Status do documento: ativo
 Owner: gresendesa
 Data de criacao: 2026-04-08
-Ultima atualizacao: 2026-06-05
+Ultima atualizacao: 2026-06-06
 
 ## Objetivo
 
@@ -26,3 +26,12 @@ Detalhes completos de cada sprint ficam em arquivos dedicados no diretorio scrum
 - Risco da sprint: alto (B-007 risco 3; resolvido)
 - Resultado: 9/9 itens entregues, 107 testes passando
 - Arquivo detalhado: scrum/sprint/SPR-2026-01.md
+
+### SPR-2026-02
+
+- Status: concluida
+- Foco: Sintaxe de diretivas renderizavel como link Markdown (B-011)
+- Prioridade PO dos itens: 1 (critica)
+- Risco da sprint: medio
+- Resultado: 1/1 item entregue, 118 testes passando
+- Arquivo detalhado: scrum/sprint/SPR-2026-02.md
