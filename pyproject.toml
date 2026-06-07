@@ -4,10 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mdbind"
-version = "0.1.4"
+version = "0.1.5"
 description = "MdBind — Structured memory in plain Markdown"
 readme = "README.md"
 requires-python = ">=3.11"
+
+authors = [
+  { name = "Guilherme Sá", email = "gui.r.sa@pm.me" }
+]   
+
+license = { text = "Apache-2.0" }
+
+keywords = ["markdown", "graph", "cli", "agent", "llm", "rag", "knowledge-base", "context"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Software Development :: Documentation",
+]
+
 dependencies = [
     "pydantic>=2.0",
     "markdown-it-py>=3.0",
