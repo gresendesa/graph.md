@@ -1,10 +1,10 @@
 """
-CLI do mdgraph — entrypoint principal.
+CLI for mdbind — main entrypoint.
 
-Comandos:
-  get <URI>     Extrai uma secao com fidelidade documental (linhas brutas)
-  tree <URI>    Exibe hierarquia visual de dependencias
-  compose <URI> Materializa documento unificado (B-007)
+Commands:
+  get <URI>     Extract a section with documentary fidelity (raw lines)
+  tree <URI>    Display visual hierarchy of dependencies
+  compose <URI> Materialize unified document (B-007)
 """
 from __future__ import annotations
 
@@ -43,23 +43,23 @@ def _split_uri(uri: str) -> tuple[str, str]:
 
 @app.command()
 def get(
-    uri: str = typer.Argument(..., help="URI da secao no formato arquivo.md#id"),
+    uri: str = typer.Argument(..., help="URI of the section in the format file.md#id"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
 ) -> None:
     """
-    Extrai uma secao com 100%% de fidelidade documental (linhas brutas do arquivo fonte).
+    Extract a section with 100%% documentary fidelity (raw lines from the source file).
     """
     file_path_str, section_id = _split_uri(uri)
     file_path = Path(file_path_str).resolve()
 
     if not file_path.exists():
-        typer.echo(f"Erro: arquivo nao encontrado: '{file_path}'", err=True)
+        typer.echo(f"Error: file not found: '{file_path}'", err=True)
         raise typer.Exit(code=1)
 
     try:
         sections = parse_file(file_path)
     except ParseError as exc:
-        typer.echo(f"Erro de parsing: {exc}", err=True)
+        typer.echo(f"Parse error: {exc}", err=True)
         raise typer.Exit(code=1)
 
     matched = next(
@@ -69,15 +69,15 @@ def get(
 
     if matched is None:
         typer.echo(
-            f"Erro: secao '{section_id}' nao encontrada em '{file_path}'",
+            f"Error: section '{section_id}' not found in '{file_path}'",
             err=True,
         )
         raise typer.Exit(code=1)
 
-    # Fatiamento documental: preserva o texto exato do arquivo fonte
+    # Documentary slicing: preserves the exact text from the source file
     lines = file_path.read_text(encoding="utf-8").splitlines(keepends=True)
     start = matched.raw.source_start_line - 1  # base-0
-    end = matched.raw.source_end_line          # slice exclusivo = ultima linha inclusiva
+    end = matched.raw.source_end_line          # exclusive slice = last line inclusive
 
     output = "".join(lines[start:end])
     # Garantir newline final sem adicionar extra
@@ -103,23 +103,23 @@ def get(
 
 @app.command()
 def tree(
-    uri: str = typer.Argument(..., help="URI da secao no formato arquivo.md#id"),
+    uri: str = typer.Argument(..., help="URI of the section in the format file.md#id"),
     root: Optional[Path] = typer.Option(
         None, "--root", "-r",
-        help="Diretorio raiz do repositorio (padrao: diretorio do arquivo).",
+        help="Root directory of the repository (default: directory of the file).",
     ),
     refs: bool = typer.Option(
         False, "--refs",
-        help="Exibir backlinks (quem depende desta secao).",
+        help="Display backlinks (who depends on this section).",
     ),
     depth: Optional[int] = typer.Option(
         None, "--depth", "-d",
-        help="Profundidade maxima da arvore (padrao: ilimitada).",
+        help="Maximum depth of the tree (default: unlimited).",
     ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
 ) -> None:
     """
-    Exibe a hierarquia visual de dependencias de uma secao.
+    Display the visual hierarchy of dependencies of a section.
     """
     from mdbind.index import index_repository
 
@@ -131,14 +131,14 @@ def tree(
     try:
         graph = index_repository(repo_root)
     except ParseError as exc:
-        typer.echo(f"Erro de parsing: {exc}", err=True)
+        typer.echo(f"Parse error: {exc}", err=True)
         raise typer.Exit(code=1)
 
-    # Montar URI absoluta para lookup
+    # Build absolute URI for lookup
     abs_uri = str(file_path) + "#" + section_id
 
     if abs_uri not in graph.index.sections:
-        typer.echo(f"Erro: URI '{abs_uri}' nao encontrada no indice.", err=True)
+        typer.echo(f"Error: URI '{abs_uri}' not found in the index.", err=True)
         raise typer.Exit(code=1)
 
     if json_output:
@@ -160,7 +160,7 @@ def _label(uri: str, graph) -> str:
 
 
 def _print_tree_outgoing(uri: str, graph, prefix: str, visited: set, depth: Optional[int] = None) -> None:
-    marker = "(ciclo)" if uri in visited else ""
+    marker = "(cycle)" if uri in visited else ""
     typer.echo(f"{prefix}{_label(uri, graph)} {marker}".rstrip())
     if uri in visited:
         return
@@ -175,7 +175,7 @@ def _print_tree_outgoing(uri: str, graph, prefix: str, visited: set, depth: Opti
 
 
 def _print_tree_incoming(uri: str, graph, prefix: str, visited: set, depth: Optional[int] = None) -> None:
-    marker = "(ciclo)" if uri in visited else ""
+    marker = "(cycle)" if uri in visited else ""
     typer.echo(f"{prefix}{_label(uri, graph)} {marker}".rstrip())
     if uri in visited:
         return
@@ -233,21 +233,21 @@ def _build_tree_incoming(uri: str, graph, visited: set, depth: Optional[int] = N
 
 @app.command()
 def compose(
-    uri: str = typer.Argument(..., help="URI da secao raiz no formato arquivo.md#id"),
+    uri: str = typer.Argument(..., help="URI of the root section in the format file.md#id"),
     root: Optional[Path] = typer.Option(
         None, "--root", "-r",
-        help="Diretorio raiz do repositorio (padrao: diretorio do arquivo).",
+        help="Root directory of the repository (default: directory of the file).",
     ),
-    strict: bool = typer.Option(False, "--strict", help="Abortar em URI nao resolvida."),
-    deduplicate: bool = typer.Option(False, "--deduplicate", help="Deduplicar nos repetidos."),
-    json_output: bool = typer.Option(False, "--json", help="Exportar como JSON estruturado."),
+    strict: bool = typer.Option(False, "--strict", help="Abort on unresolved URI."),
+    deduplicate: bool = typer.Option(False, "--deduplicate", help="Deduplicate repeated nodes."),
+    json_output: bool = typer.Option(False, "--json", help="Export as structured JSON."),
     depth: Optional[int] = typer.Option(
         None, "--depth", "-d",
-        help="Profundidade maxima de expansao de @include (padrao: ilimitada).",
+        help="Maximum depth of @include expansion (default: unlimited).",
     ),
 ) -> None:
     """
-    Materializa um documento Markdown unificado expandindo @include recursivamente.
+    Materializes a unified Markdown document by recursively expanding @include.
     """
     import json as json_mod
     from mdbind.composer import compose as do_compose
@@ -257,7 +257,7 @@ def compose(
     file_path = Path(file_path_str).resolve()
 
     if not file_path.exists():
-        typer.echo(f"Erro: arquivo nao encontrado: '{file_path}'", err=True)
+        typer.echo(f"Error: file not found: '{file_path}'", err=True)
         raise typer.Exit(code=1)
 
     repo_root = root.resolve() if root else file_path.parent
@@ -265,13 +265,13 @@ def compose(
     try:
         graph = index_repository(repo_root)
     except ParseError as exc:
-        typer.echo(f"Erro de parsing: {exc}", err=True)
+        typer.echo(f"Parse error: {exc}", err=True)
         raise typer.Exit(code=1)
 
     abs_uri = str(file_path) + "#" + section_id
 
     if abs_uri not in graph.index.sections:
-        typer.echo(f"Erro: URI '{abs_uri}' nao encontrada no indice.", err=True)
+        typer.echo(f"Error: URI '{abs_uri}' not found in the index.", err=True)
         raise typer.Exit(code=1)
 
     collected_warnings: list[str] = []
@@ -285,11 +285,11 @@ def compose(
             depth=depth,
         )
     except ValueError as exc:
-        typer.echo(f"Erro: {exc}", err=True)
+        typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1)
 
     for w in collected_warnings:
-        typer.echo(f"Aviso: {w}", err=True)
+        typer.echo(f"Warning: {w}", err=True)
 
     if json_output:
         typer.echo(json_mod.dumps({"uri": abs_uri, "content": result}, ensure_ascii=False))
@@ -305,12 +305,12 @@ def compose(
 def validate(
     root: Optional[Path] = typer.Option(
         None, "--root", "-r",
-        help="Diretorio raiz do repositorio (padrao: diretorio atual).",
+        help="Root directory of the repository (default: current directory).",
     ),
-    json_output: bool = typer.Option(False, "--json", help="Exportar resultado como JSON."),
+    json_output: bool = typer.Option(False, "--json", help="Export result as JSON."),
 ) -> None:
     """
-    Verifica a integridade estrutural do repositorio de grafos Markdown.
+    Verifies the structural integrity of the Markdown graph repository.
 
     Checks: broken refs/includes, duplicate section IDs, include cycles,
     sections without required payload.

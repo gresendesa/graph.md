@@ -52,6 +52,8 @@ Full details for each item are in dedicated files under scrum/backlog/.
 
 ### Pending
 
-(none — all items delivered)
+| ID    | Title                                               | PO Priority      | Risk     | Deps  |
+|-------|-----------------------------------------------------|------------------|----------|-------|
+| B-028 | Translate CLI help strings to English               | (pending)        | 1 (low)  | none  |
 
 ## Template for new items
