@@ -1,0 +1,219 @@
+# mdbind
+
+> A Python CLI tool (`mdb`) that turns Markdown repositories into a navigable directed knowledge graph. Sections become addressable nodes with stable URIs, structured YAML metadata, and explicit graph edges (`@include`, `@ref`).
+
+## Core mental model
+
+- **Repository**: a directory tree of `.md` files indexed as a graph.
+- **Section**: an atomic node — a Markdown heading followed immediately by a YAML block containing `section: <id>`. The `section` field is mandatory and must be globally unique within the repository.
+- **URI**: `path/to/file.md#section-id` — stable across reorganizations.
+- **Directive**: a standard Markdown link used as a graph edge:
+  - `[@include: label](file.md#id)` — the target section is expanded inline during `mdb compose`.
+  - `[@ref: label](file.md#id)` — records a dependency edge without embedding content.
+- **Root**: the `--root <dir>` flag tells commands which directory to index. Required for all graph-aware commands.
+
+## Section syntax
+
+```markdown
+## Heading text
+
+```yaml
+section: unique-id
+title: Human-readable title
+owner: team-name
+tags: [tag1, tag2]
+status: active
+```
+
+Body content here.
+
+[@include: label](other.md#other-id)
+[@ref: label](another.md#another-id)
+```
+
+Rules:
+- The YAML block must be the first block after the heading. Any content before it is ignored.
+- `section:` is the only required field. All other fields are free-form metadata.
+- Duplicate `section:` IDs across the repository are a validation error.
+
+## CLI reference
+
+All commands are invoked as `mdb <command> [args] [options]`.  
+All commands accept `--json` to emit machine-readable JSON to stdout.  
+Exit code `0` = success; `1` = error or validation failure.
+
+### mdb get <URI>
+
+Returns the raw source lines of a section with full documentary fidelity.
+
+```
+mdb get docs/auth.md#auth
+mdb get docs/auth.md#auth --json
+```
+
+JSON output fields: `id`, `title`, `file`, `source_start_line`, `source_end_line`, `raw_content`, `metadata`.
+
+### mdb tree <URI>
+
+Displays the dependency tree rooted at URI, following `@include` and `@ref` edges.
+
+```
+mdb tree docs/auth.md#auth --root docs/
+mdb tree docs/auth.md#auth --root docs/ --depth 2
+mdb tree docs/auth.md#auth --root docs/ --refs      # include incoming edges
+mdb tree docs/auth.md#auth --root docs/ --json
+```
+
+### mdb compose <URI>
+
+Materializes a unified document by recursively expanding `@include` directives.  
+`@ref` edges are preserved as links, not expanded.
+
+```
+mdb compose docs/auth.md#auth --root docs/
+mdb compose docs/auth.md#auth --root docs/ --depth 2
+mdb compose docs/auth.md#auth --root docs/ --deduplicate
+mdb compose docs/auth.md#auth --root docs/ --strict   # abort on any broken include
+mdb compose docs/auth.md#auth --root docs/ --json
+```
+
+### mdb validate
+
+Checks repository integrity. Reports: broken `@ref` targets, broken `@include` targets, duplicate `section:` IDs, and include cycles.
+
+```
+mdb validate --root docs/
+mdb validate --root docs/ --json
+```
+
+Exit code `0` = repository is clean. Exit code `1` = one or more errors found.
+
+### mdb context <URI>
+
+Returns structured context of a section: metadata, outgoing edges (`@include`/`@ref`), and incoming edges (backlinks).
+
+```
+mdb context docs/auth.md#auth --root docs/ --json
+```
+
+JSON output fields: `id`, `file`, `metadata`, `outgoing`, `incoming`.
+
+### mdb backlinks <URI>
+
+Lists all sections that reference the given URI (incoming edges only).
+
+```
+mdb backlinks docs/auth.md#auth --root docs/ --json
+```
+
+### mdb search <predicate>
+
+Searches sections by metadata. Supported predicate forms:
+- `key=value` — exact match
+- `key~=value` — substring match
+- `tag:value` — tag membership
+
+```
+mdb search owner=security-team --root docs/
+mdb search title~=Auth --root docs/
+mdb search tag:api --root docs/ --json
+```
+
+### mdb impact <URI>
+
+Returns all sections that depend (directly or indirectly) on the given URI via reverse BFS on the graph.
+
+```
+mdb impact docs/auth.md#auth --root docs/ --json
+```
+
+### mdb neighbors <URI>
+
+Returns all nodes reachable within `--depth` hops in either direction (bidirectional BFS).
+
+```
+mdb neighbors docs/auth.md#auth --root docs/ --depth 2 --json
+```
+
+### mdb explain <URI_A> <URI_B>
+
+Finds all simple directed paths from URI_A to URI_B.
+
+```
+mdb explain docs/auth.md#auth docs/auth.md#jwt --root docs/ --json
+```
+
+### mdb diff
+
+Computes the structural diff of the graph against a historical git reference. Reports added/removed/changed sections and edges.
+
+```
+mdb diff --root docs/ --since HEAD~1 --json
+```
+
+### mdb query <expression>
+
+Advanced boolean metadata query. Supports `AND`, `OR`, `NOT`, grouping with parentheses, and all predicate forms from `mdb search`.
+
+```
+mdb query "owner=security-team AND tag:api" --root docs/ --json
+mdb query "NOT status=obsolete" --root docs/ --json
+mdb query "(tag:auth OR tag:jwt) AND owner=alice" --root docs/ --json
+```
+
+### mdb context-compose <URI>
+
+Bounded semantic materialization for LLM consumption. Expands the graph starting at URI, respecting `--depth` and `--token-limit` budgets. Ideal for fitting relevant context into a fixed token window.
+
+```
+mdb context-compose docs/auth.md#auth --root docs/ --depth 2 --token-limit 2000 --json
+```
+
+## Recommended patterns for AI agents
+
+**Retrieve a known node:**
+```
+mdb get <file>#<id> --json
+```
+
+**Discover what a node depends on:**
+```
+mdb tree <file>#<id> --root <root> --json
+```
+
+**Discover what depends on a node (impact analysis):**
+```
+mdb impact <file>#<id> --root <root> --json
+```
+
+**Fit a subgraph into a token budget:**
+```
+mdb context-compose <file>#<id> --root <root> --depth 2 --token-limit 4000 --json
+```
+
+**Validate before composing:**
+```
+mdb validate --root <root> --json && mdb compose <file>#<id> --root <root> --json
+```
+
+**Find all nodes matching a metadata condition:**
+```
+mdb query "tag:api AND NOT status=obsolete" --root <root> --json
+```
+
+## Constraints and invariants
+
+- A section URI is valid only if the file exists and the `section:` ID is declared in that file.
+- `@include` cycles are a hard error — `mdb validate` and `mdb compose --strict` will reject them.
+- `--root` must be an ancestor directory of the target file.
+- All JSON outputs are deterministic for the same input.
+- `mdb get` does not require `--root`; all graph-traversal commands do.
+
+## Installation
+
+```
+pip install mdbind
+mdb --help
+```
+
+Requires Python 3.11+.
