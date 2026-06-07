@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mdbind"
-version = "0.1.3"
+version = "0.1.4"
 description = "MdBind — Structured memory in plain Markdown"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,7 +25,7 @@ where = ["src"]
 testpaths = ["tests"]
 
 [project.urls]
-Homepage = "https://github.com/seu-usuario/mdbind"
-Repository = "https://github.com/seu-usuario/mdbind"
-"Bug Tracker" = "https://github.com/seu-usuario/mdbind/issues"
-Documentation = "https://github.com/seu-usuario/mdbind#readme"
+Homepage = "https://github.com/gresendesa/mdbind"
+Repository = "https://github.com/gresendesa/mdbind"
+"Bug Tracker" = "https://github.com/gresendesa/mdbind/issues"
+Documentation = "https://github.com/gresendesa/mdbind#readme"
