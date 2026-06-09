@@ -274,6 +274,27 @@ class TestContextCompose:
         assert "truncated" in data
         assert "content" in data
 
+    def test_context_compose_json_with_yaml_date_metadata(self, tmp_path):
+        source = tmp_path / "dated.md"
+        source.write_text(
+            "# Dated Section\n\n"
+            "```yaml\n"
+            "section: dated\n"
+            "title: Dated Section\n"
+            "created_at: 2026-06-08\n"
+            "```\n\n"
+            "Body.\n",
+            encoding="utf-8",
+        )
+
+        uri = str(source.resolve()) + "#dated"
+        result = runner.invoke(app, ["context-compose", uri, "--root", str(tmp_path), "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["uri"] == uri
+        assert "Body." in data["content"]
+
     def test_context_compose_not_truncated_by_default(self):
         result = runner.invoke(
             app, ["context-compose", _uri("intro.md", "intro"), "--root", str(REPO), "--json"]

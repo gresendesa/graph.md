@@ -49,12 +49,13 @@ Full details for each item are in dedicated files under scrum/backlog/.
 | B-024 | mdb context-compose                          | SPR-2026-07 |
 | B-026 | Rename project to MdBind, CLI command to mdb | SPR-2026-09 |
 | B-027 | README.md ideal for GitHub homepage          | SPR-2026-10 |
+| B-029 | JSON context fails with YAML date metadata   | SPR-2026-11 |
 
 ### Pending
 
 | ID    | Title                                               | PO Priority      | Risk     | Deps  |
 |-------|-----------------------------------------------------|------------------|----------|-------|
-| B-029 | JSON context fails with YAML date metadata          | 2 (high)         | 2 (medium) | none  |
+| -     | (none)                                              | -                | -        | -     |
 
 ### Obsolete
 

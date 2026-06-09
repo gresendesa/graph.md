@@ -37,6 +37,14 @@ def _split_uri(uri: str) -> tuple[str, str]:
     return path_part, fragment
 
 
+def _json_dumps(payload: object, **kwargs) -> str:
+    import json as json_mod
+
+    kwargs.setdefault("ensure_ascii", False)
+    kwargs.setdefault("default", str)
+    return json_mod.dumps(payload, **kwargs)
+
+
 # ---------------------------------------------------------------------------
 # get
 # ---------------------------------------------------------------------------
@@ -85,8 +93,7 @@ def get(
         output += "\n"
 
     if json_output:
-        import json as json_mod
-        typer.echo(json_mod.dumps({
+        typer.echo(_json_dumps({
             "uri": uri,
             "file_path": str(file_path),
             "source_start_line": matched.raw.source_start_line,
@@ -142,9 +149,8 @@ def tree(
         raise typer.Exit(code=1)
 
     if json_output:
-        import json as json_mod
         tree_data = _build_tree_outgoing(abs_uri, graph, visited=set(), depth=depth) if not refs else _build_tree_incoming(abs_uri, graph, visited=set(), depth=depth)
-        typer.echo(json_mod.dumps({"uri": abs_uri, "tree": tree_data}, ensure_ascii=False))
+        typer.echo(_json_dumps({"uri": abs_uri, "tree": tree_data}, ensure_ascii=False))
     elif refs:
         _print_tree_incoming(abs_uri, graph, prefix="", visited=set(), depth=depth)
     else:
@@ -249,7 +255,6 @@ def compose(
     """
     Materializes a unified Markdown document by recursively expanding @include.
     """
-    import json as json_mod
     from mdbind.composer import compose as do_compose
     from mdbind.index import index_repository
 
@@ -292,7 +297,7 @@ def compose(
         typer.echo(f"Warning: {w}", err=True)
 
     if json_output:
-        typer.echo(json_mod.dumps({"uri": abs_uri, "content": result}, ensure_ascii=False))
+        typer.echo(_json_dumps({"uri": abs_uri, "content": result}, ensure_ascii=False))
     else:
         typer.echo(result, nl=False)
 
@@ -317,7 +322,6 @@ def validate(
 
     Exit code 0 = clean, 1 = errors found.
     """
-    import json as json_mod
     from mdbind.index import index_repository
 
     repo_root = (root.resolve() if root else Path.cwd())
@@ -328,7 +332,7 @@ def validate(
         errors = [{"type": "parse_error", "uri": "", "detail": str(exc)}]
         summary = {"total_sections": 0, "total_edges": 0, "errors": 1, "warnings": 0}
         if json_output:
-            typer.echo(json_mod.dumps({"errors": errors, "warnings": [], "summary": summary}, ensure_ascii=False))
+            typer.echo(_json_dumps({"errors": errors, "warnings": [], "summary": summary}, ensure_ascii=False))
         else:
             typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -383,7 +387,7 @@ def validate(
     }
 
     if json_output:
-        typer.echo(json_mod.dumps(
+        typer.echo(_json_dumps(
             {"errors": errors, "warnings": warnings, "summary": summary},
             ensure_ascii=False,
             indent=2,
@@ -424,7 +428,6 @@ def context(
     """
     Returns structured context of a section: metadata, outgoing edges, incoming edges.
     """
-    import json as json_mod
     from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
@@ -455,7 +458,7 @@ def context(
     ]
 
     if json_output:
-        typer.echo(json_mod.dumps({
+        typer.echo(_json_dumps({
             "uri": abs_uri,
             "metadata": section.metadata,
             "outgoing": outgoing,
@@ -497,7 +500,6 @@ def backlinks(
     """
     Lists all sections that reference this URI (incoming edges).
     """
-    import json as json_mod
     from mdbind.index import index_repository
 
     file_path_str, section_id = _split_uri(uri)
@@ -520,7 +522,7 @@ def backlinks(
     result = [{"uri": s, "type": _edge_type(s, abs_uri, graph.index.sections.get(s))} for s in bl]
 
     if json_output:
-        typer.echo(json_mod.dumps({"uri": abs_uri, "backlinks": result}, ensure_ascii=False, indent=2))
+        typer.echo(_json_dumps({"uri": abs_uri, "backlinks": result}, ensure_ascii=False, indent=2))
     else:
         if not result:
             typer.echo(f"No backlinks found for '{abs_uri}'.")
@@ -546,7 +548,6 @@ def search(
     """
     Searches sections by metadata predicate. Supports key=value, key~=value, tag:value.
     """
-    import json as json_mod
     import re
     from mdbind.index import index_repository
 
@@ -584,7 +585,7 @@ def search(
     results.sort(key=lambda r: r["uri"])
 
     if json_output:
-        typer.echo(json_mod.dumps({"predicate": predicate, "results": results}, ensure_ascii=False, indent=2))
+        typer.echo(_json_dumps({"predicate": predicate, "results": results}, ensure_ascii=False, indent=2))
     else:
         if not results:
             typer.echo(f"No sections found matching '{predicate}'.")
@@ -610,7 +611,6 @@ def impact(
     """
     Returns all sections that depend (directly or indirectly) on this URI via reverse BFS.
     """
-    import json as json_mod
     from collections import deque
     from mdbind.index import index_repository
 
@@ -650,7 +650,7 @@ def impact(
     indirect_out = [{"uri": u} for u in indirect]
 
     if json_output:
-        typer.echo(json_mod.dumps({
+        typer.echo(_json_dumps({
             "uri": abs_uri,
             "direct": direct_out,
             "indirect": indirect_out,
@@ -686,7 +686,6 @@ def neighbors(
     """
     Returns all nodes reachable from URI within --depth hops (bidirectional).
     """
-    import json as json_mod
     from collections import deque
     from mdbind.index import index_repository
 
@@ -731,7 +730,7 @@ def neighbors(
     )
 
     if json_output:
-        typer.echo(json_mod.dumps(
+        typer.echo(_json_dumps(
             {"uri": abs_uri, "depth": depth, "neighbors": result},
             ensure_ascii=False, indent=2,
         ))
@@ -760,7 +759,6 @@ def explain(
     """
     Finds all simple directed paths from URI_A to URI_B.
     """
-    import json as json_mod
     from mdbind.index import index_repository
 
     def _resolve(uri: str, default_parent: Path) -> str:
@@ -813,7 +811,7 @@ def explain(
     ]
 
     if json_output:
-        typer.echo(json_mod.dumps(
+        typer.echo(_json_dumps(
             {"from": abs_a, "to": abs_b, "paths": paths_full},
             ensure_ascii=False, indent=2,
         ))
@@ -845,7 +843,6 @@ def diff(
     """
     Computes structural diff of the graph against a historical git ref.
     """
-    import json as json_mod
     import subprocess
     import tempfile
     import shutil
@@ -944,7 +941,7 @@ def diff(
     }
 
     if json_output:
-        typer.echo(json_mod.dumps(result, ensure_ascii=False, indent=2))
+        typer.echo(_json_dumps(result, ensure_ascii=False, indent=2))
     else:
         typer.echo(f"Diff against '{since}':")
         typer.echo(f"  +{len(added_sections)} sections, -{len(removed_sections)} sections")
@@ -977,7 +974,6 @@ def query(
 
     Predicate formats: key=value, key~=value, tag:value
     """
-    import json as json_mod
     import re
     from mdbind.index import index_repository
 
@@ -1082,7 +1078,7 @@ def query(
     )
 
     if json_output:
-        typer.echo(json_mod.dumps(
+        typer.echo(_json_dumps(
             {"expression": expression, "results": results},
             ensure_ascii=False, indent=2,
         ))
@@ -1120,7 +1116,6 @@ def context_compose(
     Bounded semantic materialization for LLM consumption.
     Like compose, but respects --depth and --token-limit budgets.
     """
-    import json as json_mod
     from mdbind.composer import compose as do_compose
     from mdbind.index import index_repository
 
@@ -1168,7 +1163,7 @@ def context_compose(
     token_estimate = len(content) // 4
 
     if json_output:
-        typer.echo(json_mod.dumps({
+        typer.echo(_json_dumps({
             "uri": abs_uri,
             "depth": depth,
             "token_estimate": token_estimate,

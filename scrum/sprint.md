@@ -110,9 +110,9 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 
 ### SPR-2026-11
 
-- Status: doing
+- Status: done
 - Focus: B-029 — JSON context fails with YAML date metadata
 - PO Priority of items: 2 (high)
 - Sprint risk: medium (weighted avg 1.6)
-- Result: pending
+- Result: 5/5 tasks done, 211 tests passing
 - Detailed file: scrum/sprint/SPR-2026-11.md

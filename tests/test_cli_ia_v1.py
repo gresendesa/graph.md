@@ -61,6 +61,26 @@ class TestContext:
         data = json.loads(result.output)
         assert data["metadata"].get("id") == "conceito-b"
 
+    def test_context_json_serializes_yaml_date_metadata_as_string(self, tmp_path):
+        source = tmp_path / "dated.md"
+        source.write_text(
+            "# Dated Section\n\n"
+            "```yaml\n"
+            "section: dated\n"
+            "title: Dated Section\n"
+            "created_at: 2026-06-08\n"
+            "```\n\n"
+            "Body.\n",
+            encoding="utf-8",
+        )
+
+        uri = str(source.resolve()) + "#dated"
+        result = runner.invoke(app, ["context", uri, "--root", str(tmp_path), "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["metadata"]["created_at"] == "2026-06-08"
+
     def test_context_no_outgoing_for_leaf(self):
         result = runner.invoke(app, ["context", _uri("conceitos.md", "conceito-b"), "--root", str(REPO), "--json"])
         data = json.loads(result.output)
