@@ -55,7 +55,7 @@ Full details for each item are in dedicated files under scrum/backlog/.
 
 | ID    | Title                                               | PO Priority      | Risk     | Deps  |
 |-------|-----------------------------------------------------|------------------|----------|-------|
-| -     | (none)                                              | -                | -        | -     |
+| B-030 | Structured query pseudo-fields and regex predicates | to be defined    | 3 (high) | B-023 |
 
 ### Obsolete
 
