@@ -3,7 +3,7 @@
 Document status: active
 Owner: gresendesa
 Creation date: 2026-06-09
-Last updated: 2026-06-09
+Last updated: 2026-06-11
 
 ## Purpose
 
@@ -24,3 +24,30 @@ Record relevant changes to components, contracts, and flows.
   JSON string, for example `"created_at": "2026-06-08"`.
 - Flow impact: CLI JSON rendering is more tolerant of YAML metadata values while
   preserving existing command schemas.
+
+### 2026-06-11 - Query structural pseudo-fields and regex predicates
+
+- Status: active
+- Owner: gresendesa
+- Context: `mdb query` needed to filter sections by structural attributes such
+  as section ID, file path, and heading without relying on helper metadata tags.
+- Change: `src/mdbind/cli.py` now evaluates query predicates against the full
+  `ParsedSection` so `section`, `id`, `path`, `file`, and `heading` can be used
+  as pseudo-fields.
+- Contract impact: Additive query-language change. JSON output shape remains
+  `{"expression": "...", "results": [{"uri": "...", "metadata": {}}]}`.
+- Flow impact: Query matching can combine metadata predicates, structural
+  pseudo-fields, boolean operators, and regex predicates with `key~=/regex/`.
+
+### 2026-06-11 - Diff historical parser path normalization
+
+- Status: active
+- Owner: gresendesa
+- Context: `mdb diff --json` failed when historical Markdown content from Git
+  was parsed with a `Path` object as `file_path`.
+- Change: The historical graph builder now passes `str(abs_path)` to
+  `parse_text`.
+- Contract impact: No output shape change. The fix preserves the existing
+  structural diff JSON schema.
+- Flow impact: Historical Markdown parsing in `mdb diff` now matches the normal
+  parser contract used by `parse_file`.

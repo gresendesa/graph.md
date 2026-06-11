@@ -159,7 +159,7 @@ auth
 | `mdb neighbors <URI>` | All nodes reachable within N hops |
 | `mdb explain <URI_A> <URI_B>` | All directed paths between two nodes |
 | `mdb diff` | Structural graph diff against a git reference |
-| `mdb query <expression>` | Boolean metadata query (`AND`, `OR`, `NOT`) |
+| `mdb query <expression>` | Boolean metadata/structure query (`AND`, `OR`, `NOT`) |
 | `mdb context-compose <URI>` | Bounded materialization for LLM consumption |
 
 All commands accept `--json` for machine-readable output.  
@@ -176,6 +176,9 @@ mdb context docs/auth.md#auth --root docs/ --json
 
 # Find all sections tagged api that are not obsolete
 mdb query "tag:api AND NOT status=obsolete" --root docs/ --json
+
+# Find backlog-like section IDs with a regex predicate
+mdb query "section~=/^backlog\\.item\\.B-\\d{3}$/ AND NOT status=done" --root docs/ --json
 
 # Bounded context for LLM — depth 2, max 2000 tokens
 mdb context-compose docs/auth.md#auth --root docs/ --depth 2 --token-limit 2000 --json

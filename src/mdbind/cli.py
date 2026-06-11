@@ -899,7 +899,7 @@ def diff(
 
         abs_path = Path(git_root) / rel_path
         try:
-            sections = parse_text(content, abs_path)
+            sections = parse_text(content, str(abs_path))
         except ParseError:
             continue
 
@@ -992,8 +992,19 @@ def query(
     def _tokenize(expr: str) -> list[str]:
         return _TOKEN_RE.findall(expr)
 
+    def _field_value(section, key: str):
+        metadata = section.metadata
+        if key in ("section", "id"):
+            return metadata.get("id", "")
+        if key in ("path", "file"):
+            return section.file_path
+        if key == "heading":
+            return section.raw.heading_text
+        return metadata.get(key, "")
+
     # --- Predicate evaluator (reuses search logic) ---
-    def _eval_predicate(pred: str, metadata: dict) -> bool:
+    def _eval_predicate(pred: str, section) -> bool:
+        metadata = section.metadata
         tag_m = re.match(r"^tag:(.+)$", pred)
         sub_m = re.match(r"^([^~=]+)~=(.+)$", pred)
         exact_m = re.match(r"^([^~=]+)=(.+)$", pred)
@@ -1005,10 +1016,13 @@ def query(
             return tag_val in tags
         if sub_m:
             key, val = sub_m.group(1), sub_m.group(2)
-            return val.lower() in str(metadata.get(key, "")).lower()
+            if val.startswith("/") and val.endswith("/") and len(val) >= 2:
+                pattern = val[1:-1]
+                return re.search(pattern, str(_field_value(section, key))) is not None
+            return val.lower() in str(_field_value(section, key)).lower()
         if exact_m:
             key, val = exact_m.group(1), exact_m.group(2)
-            return str(metadata.get(key, "")) == val
+            return str(_field_value(section, key)) == val
         return False
 
     # --- Recursive descent parser ---
@@ -1032,7 +1046,7 @@ def query(
                 right = self.parse_term()
                 left_fn = left
                 right_fn = right
-                left = lambda meta, l=left_fn, r=right_fn: l(meta) or r(meta)
+                left = lambda section, l=left_fn, r=right_fn: l(section) or r(section)
             return left
 
         def parse_term(self):
@@ -1042,17 +1056,17 @@ def query(
                 right = self.parse_factor()
                 left_fn = left
                 right_fn = right
-                left = lambda meta, l=left_fn, r=right_fn: l(meta) and r(meta)
+                left = lambda section, l=left_fn, r=right_fn: l(section) and r(section)
             return left
 
         def parse_factor(self):
             tok = self.peek()
             if tok is None:
-                return lambda meta: True
+                return lambda section: True
             if tok.upper() == "NOT":
                 self.consume()
                 inner = self.parse_factor()
-                return lambda meta, f=inner: not f(meta)
+                return lambda section, f=inner: not f(section)
             if tok == "(":
                 self.consume()
                 expr = self.parse_expr()
@@ -1060,7 +1074,7 @@ def query(
                     self.consume()
                 return expr
             pred = self.consume()
-            return lambda meta, p=pred: _eval_predicate(p, meta)
+            return lambda section, p=pred: _eval_predicate(p, section)
 
     try:
         tokens = _tokenize(expression)
@@ -1070,12 +1084,16 @@ def query(
         typer.echo(f"Error parsing expression: {exc}", err=True)
         raise typer.Exit(code=1)
 
-    results = sorted(
-        [{"uri": uri, "metadata": section.metadata}
-         for uri, section in graph.index.sections.items()
-         if matcher(section.metadata)],
-        key=lambda r: r["uri"],
-    )
+    try:
+        results = sorted(
+            [{"uri": uri, "metadata": section.metadata}
+             for uri, section in graph.index.sections.items()
+             if matcher(section)],
+            key=lambda r: r["uri"],
+        )
+    except re.error as exc:
+        typer.echo(f"Error parsing expression: invalid regex: {exc}", err=True)
+        raise typer.Exit(code=1)
 
     if json_output:
         typer.echo(_json_dumps(

@@ -3,7 +3,7 @@
 Document status: active
 Owner: gresendesa
 Creation date: 2026-04-08
-Last updated: 2026-06-09
+Last updated: 2026-06-11
 
 ## Purpose
 
@@ -50,12 +50,12 @@ Full details for each item are in dedicated files under scrum/backlog/.
 | B-026 | Rename project to MdBind, CLI command to mdb | SPR-2026-09 |
 | B-027 | README.md ideal for GitHub homepage          | SPR-2026-10 |
 | B-029 | JSON context fails with YAML date metadata   | SPR-2026-11 |
+| B-031 | `mdb diff` fails on historical Markdown parsing with PosixPath file_path | SPR-2026-12 |
+| B-030 | Structured query pseudo-fields and regex predicates | SPR-2026-12 |
 
 ### Pending
 
-| ID    | Title                                               | PO Priority      | Risk     | Deps  |
-|-------|-----------------------------------------------------|------------------|----------|-------|
-| B-030 | Structured query pseudo-fields and regex predicates | to be defined    | 3 (high) | B-023 |
+(none)
 
 ### Obsolete
 

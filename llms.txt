@@ -153,12 +153,19 @@ mdb diff --root docs/ --since HEAD~1 --json
 
 ### mdb query <expression>
 
-Advanced boolean metadata query. Supports `AND`, `OR`, `NOT`, grouping with parentheses, and all predicate forms from `mdb search`.
+Advanced boolean metadata and structure query. Supports `AND`, `OR`, `NOT`, grouping with parentheses, all predicate forms from `mdb search`, and regex predicates with `key~=/regex/`.
+
+Structural pseudo-fields:
+- `section` and `id` — section identifier
+- `path` and `file` — source file path
+- `heading` — Markdown heading text
 
 ```
 mdb query "owner=security-team AND tag:api" --root docs/ --json
 mdb query "NOT status=obsolete" --root docs/ --json
 mdb query "(tag:auth OR tag:jwt) AND owner=alice" --root docs/ --json
+mdb query "section~=/^backlog\\.item\\.B-\\d{3}$/ AND NOT status=done" --root docs/ --json
+mdb query "path~=scrum/backlog/ AND heading~=Backlog" --root docs/ --json
 ```
 
 ### mdb context-compose <URI>

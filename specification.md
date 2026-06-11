@@ -362,10 +362,13 @@ Computes the structural difference between the current graph state and a histori
 
 $$f: G \times \text{BooleanExpr} \to V$$
 
-Advanced boolean query over section metadata. Supports AND, OR, NOT operators.
+Advanced boolean query over section metadata and structural pseudo-fields.
+Supports AND, OR, NOT operators.
 
 * **Syntax:** `tag:api AND owner:team-core NOT status:obsolete`
-* **Algorithm:** Parse expression tree; evaluate each node against metadata dict.
+* **Predicate syntax:** `key=value` (exact match), `key~=value` (substring match), `tag:value` (tag membership), `key~=/regex/` (regex match).
+* **Structural pseudo-fields:** `section` and `id` resolve to the section identifier; `path` and `file` resolve to the source file path; `heading` resolves to the Markdown heading text.
+* **Algorithm:** Parse expression tree; evaluate each node against metadata and structural fields.
 * **Complexity:** $O(V \cdot |expr|)$
 * **Output schema:**
 ```json

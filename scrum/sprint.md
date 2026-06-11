@@ -3,7 +3,7 @@
 Document status: active
 Owner: gresendesa
 Creation date: 2026-04-08
-Last updated: 2026-06-09
+Last updated: 2026-06-11
 
 ## Purpose
 
@@ -116,3 +116,12 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 - Sprint risk: medium (weighted avg 1.6)
 - Result: 5/5 tasks done, 211 tests passing
 - Detailed file: scrum/sprint/SPR-2026-11.md
+
+### SPR-2026-12
+
+- Status: done
+- Focus: B-031 `mdb diff` PosixPath bugfix and B-030 structured query enhancements
+- PO Priority of items: B-031 = 1 (critical), B-030 = 3 (medium)
+- Sprint risk: medium (weighted avg 1.89)
+- Result: 9/9 tasks done, 216 tests passing
+- Detailed file: scrum/sprint/SPR-2026-12.md

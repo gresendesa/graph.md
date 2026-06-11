@@ -159,6 +159,14 @@ def _is_git_repo(path: Path) -> bool:
         return False
 
 
+def _git_available() -> bool:
+    try:
+        subprocess.check_output(["git", "--version"], stderr=subprocess.DEVNULL)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
 @pytest.mark.skipif(
     not _is_git_repo(Path(__file__).parent.parent),
     reason="Not a git repository",
@@ -184,6 +192,31 @@ class TestDiffNotGit:
     def test_diff_non_git_dir_exits_1(self, tmp_path):
         result = runner.invoke(app, ["diff", "--root", str(tmp_path)])
         assert result.exit_code == 1
+
+
+@pytest.mark.skipif(not _git_available(), reason="git not available")
+class TestDiffHistoricalParsing:
+    def test_diff_json_parses_historical_markdown_with_string_file_path(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text(
+            "# Existing\n\n```yaml\nsection: existing\n```\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "add", "doc.md"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "commit", "-m", "initial"], cwd=tmp_path, check=True, capture_output=True)
+
+        result = runner.invoke(app, ["diff", "--root", str(tmp_path), "--since", "HEAD", "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["since"] == "HEAD"
+        assert data["added_sections"] == []
+        assert data["removed_sections"] == []
+        assert data["added_edges"] == []
+        assert data["removed_edges"] == []
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +282,77 @@ class TestQuery:
         result = runner.invoke(app, ["query", "id=intro", "--root", str(REPO), "--json"])
         data = json.loads(result.output)
         assert data["expression"] == "id=intro"
+
+    def test_query_structural_pseudo_fields(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text(
+            "# Alpha Heading\n\n```yaml\nsection: alpha\nowner: alice\n```\n\n"
+            "# Beta Heading\n\n```yaml\nsection: beta\nowner: bob\n```\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                "query",
+                "section=alpha AND id=alpha AND path~=doc.md AND file~=doc.md AND heading~=Alpha",
+                "--root",
+                str(tmp_path),
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert len(data["results"]) == 1
+        assert data["results"][0]["metadata"]["id"] == "alpha"
+
+    def test_query_regex_predicate_with_boolean_operators(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text(
+            "# Backlog A\n\n```yaml\nsection: backlog.item.B-030\nstatus: doing\n```\n\n"
+            "# Backlog B\n\n```yaml\nsection: backlog.item.B-031\nstatus: done\n```\n\n"
+            "# Sprint\n\n```yaml\nsection: sprint.SPR-2026-12\nstatus: doing\n```\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                "query",
+                "section~=/^backlog\\.item\\.B-\\d{3}$/ AND NOT status=done",
+                "--root",
+                str(tmp_path),
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert [r["metadata"]["id"] for r in data["results"]] == ["backlog.item.B-030"]
+
+    def test_query_substring_predicate_remains_unchanged(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text(
+            "# Sec A\n\n```yaml\nsection: sec-a\ntitle: Authentication Flow\n```\n\n"
+            "# Sec B\n\n```yaml\nsection: sec-b\ntitle: Billing Flow\n```\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(app, ["query", "title~=auth", "--root", str(tmp_path), "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert [r["metadata"]["id"] for r in data["results"]] == ["sec-a"]
+
+    def test_query_invalid_regex_exits_1(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text("# Sec A\n\n```yaml\nsection: sec-a\n```\n", encoding="utf-8")
+
+        result = runner.invoke(app, ["query", "id~=/[/", "--root", str(tmp_path), "--json"])
+
+        assert result.exit_code == 1
+        assert "invalid regex" in result.output
 
 
 # ---------------------------------------------------------------------------

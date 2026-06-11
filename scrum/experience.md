@@ -3,7 +3,7 @@
 Document status: active
 Owner: gresendesa
 Creation date: 2026-04-08
-Last updated: 2026-06-09
+Last updated: 2026-06-11
 
 ## Purpose
 
@@ -39,5 +39,24 @@ Record observed problems in the development process, their causes, and how to pr
   `default=str` and routed CLI JSON output through it.
 - Preventive action: Added regression tests for `context --json` and
   `context-compose --json` with YAML date metadata.
+- Status: resolved
+- Owner: gresendesa
+
+---
+
+- ID: EXP-002
+- Date: 2026-06-11
+- Context: SPR-2026-12 / B-031
+- Problem: `mdb diff --json` could crash while parsing historical Markdown
+  files from Git because `ParsedSection.file_path` received a `PosixPath`.
+- Impact: Structural diff output was unavailable for affected repositories and
+  wrappers around MDBind received an internal traceback.
+- Root cause: The CLI historical graph builder called `parse_text(content,
+  abs_path)` with `abs_path` as a `Path`, while the parser/model contract
+  expects a string file path.
+- Corrective action: Pass `str(abs_path)` to `parse_text` in the `mdb diff`
+  historical parsing path.
+- Preventive action: Added a regression test using an isolated temporary Git
+  repository and `mdb diff --since HEAD --json`.
 - Status: resolved
 - Owner: gresendesa
