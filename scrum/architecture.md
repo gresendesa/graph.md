@@ -91,3 +91,20 @@ Record relevant changes to components, contracts, and flows.
   `schema_unsupported_uri` in this sprint.
 - Flow impact: `mdb validate` builds the graph, performs existing structural
   checks, then validates only sections that declare `schema`.
+
+### 2026-06-12 - File-scoped validation mode
+
+- Status: active
+- Owner: gresendesa
+- Context: Manual editing workflows need to validate one Markdown file without
+  recursively validating unrelated repository files or test fixtures.
+- Change: `mdb validate` now accepts `--file <path.md>` as an isolated
+  validation mode. `--root` remains the recursive integrated repository mode,
+  and using both options together is rejected.
+- Contract impact: Additive CLI contract. JSON output keeps the same
+  `errors`, `warnings`, and `summary` shape. In file mode, local schema
+  references are resolved relative to the selected file's parent directory.
+- Flow impact: File mode parses the selected file, builds an in-memory graph
+  only from its sections, and runs the same structural and schema checks used
+  by root mode. Cross-file refs/includes may be reported as broken because no
+  external graph context is loaded.

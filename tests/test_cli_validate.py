@@ -310,3 +310,106 @@ class TestValidateSchema:
         assert error["type"] == "schema_unsupported_uri"
         assert error["schema"] == "https://example.com/schema.json"
         assert "not supported" in error["detail"]
+
+
+class TestValidateFile:
+    def test_validate_file_exits_zero_without_reading_sibling_files(self, tmp_path):
+        good = tmp_path / "good.md"
+        bad = tmp_path / "bad.md"
+        good.write_text("# Good\n\n```yaml\nsection: good\n```\n", encoding="utf-8")
+        bad.write_text(
+            "# Duplicate A\n\n```yaml\nsection: duplicate\n```\n\n"
+            "# Duplicate B\n\n```yaml\nsection: duplicate\n```\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(app, ["validate", "--file", str(good), "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["summary"]["total_sections"] == 1
+        assert data["summary"]["errors"] == 0
+
+    def test_validate_file_json_output_shape(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text("# S\n\n```yaml\nsection: s\n```\n", encoding="utf-8")
+
+        result = runner.invoke(app, ["validate", "--file", str(md), "--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "errors" in data
+        assert "warnings" in data
+        assert "summary" in data
+        assert data["summary"]["total_edges"] == 0
+
+    def test_validate_file_reports_cross_file_ref_as_broken(self, tmp_path):
+        one = tmp_path / "one.md"
+        two = tmp_path / "two.md"
+        one.write_text(
+            "# One\n\n```yaml\nsection: one\n```\n\n[@ref: two](two.md#two)\n",
+            encoding="utf-8",
+        )
+        two.write_text("# Two\n\n```yaml\nsection: two\n```\n", encoding="utf-8")
+
+        result = runner.invoke(app, ["validate", "--file", str(one), "--json"])
+
+        assert result.exit_code == 1
+        data = json.loads(result.output)
+        assert data["summary"]["total_sections"] == 1
+        assert data["errors"][0]["type"] == "broken_ref"
+
+    def test_validate_file_rejects_root_conflict(self, tmp_path):
+        md = tmp_path / "doc.md"
+        md.write_text("# S\n\n```yaml\nsection: s\n```\n", encoding="utf-8")
+
+        result = runner.invoke(app, ["validate", "--root", str(tmp_path), "--file", str(md)])
+
+        assert result.exit_code == 1
+        assert "--root and --file cannot be used together" in result.output
+
+    def test_validate_file_missing_file_json(self, tmp_path):
+        missing = tmp_path / "missing.md"
+
+        result = runner.invoke(app, ["validate", "--file", str(missing), "--json"])
+
+        assert result.exit_code == 1
+        data = json.loads(result.output)
+        assert data["errors"][0]["type"] == "parse_error"
+        assert "file not found" in data["errors"][0]["detail"]
+
+    def test_validate_file_schema_uses_file_parent_as_schema_root(self, tmp_path):
+        schema_dir = tmp_path / "schema"
+        schema_dir.mkdir()
+        schema = schema_dir / "section.schema.json"
+        schema.write_text(
+            json.dumps({
+                "type": "object",
+                "required": ["id", "schema", "status"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "schema": {"type": "string"},
+                    "status": {"enum": ["todo", "doing", "done"]},
+                },
+            }),
+            encoding="utf-8",
+        )
+        md = tmp_path / "doc.md"
+        md.write_text(
+            "# S\n\n"
+            "```yaml\n"
+            "section: s\n"
+            "schema: schema/section.schema.json\n"
+            "status: blocked\n"
+            "```\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(app, ["validate", "--file", str(md), "--json"])
+
+        assert result.exit_code == 1
+        data = json.loads(result.output)
+        error = data["errors"][0]
+        assert error["type"] == "schema_validation_error"
+        assert error["path"] == "status"
+        assert error["schema_path"].endswith("schema/section.schema.json")

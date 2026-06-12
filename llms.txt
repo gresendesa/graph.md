@@ -84,9 +84,17 @@ Checks repository integrity. Reports: broken `@ref` targets, broken `@include` t
 ```
 mdb validate --root docs/
 mdb validate --root docs/ --json
+mdb validate --file docs/auth.md
+mdb validate --file docs/auth.md --json
 ```
 
 Exit code `0` = repository is clean. Exit code `1` = one or more errors found.
+
+Use `--root` for integrated recursive repository validation. Use `--file` for
+isolated validation of a single Markdown file while editing. `--root` and
+`--file` are mutually exclusive. In `--file` mode, references or includes to
+sections outside the selected file may be reported as broken because no external
+repository context is loaded.
 
 Sections can opt into metadata schema validation with a `schema` attribute in the
 structured YAML block:
@@ -97,12 +105,14 @@ schema: scrum/schema/domain.schema.json
 status: active
 ```
 
-`schema` references are local-first and resolved relative to the repository
-root. Prefer storing schemas under `scrum/schema/`. Schemas are JSON Schema
-documents and may be serialized as JSON or YAML. Validation is per-section
-only; sections without `schema` keep free-form metadata behavior. Do not fetch
-or resolve web URI schemas in this version. `mdb validate --json` reports
-schema errors with additive fields: `schema`, `schema_path`, and `path`.
+`schema` references are local-first. In `--root` mode they are resolved relative
+to the repository root; in `--file` mode they are resolved relative to the
+selected file's parent directory. Prefer storing repository schemas under
+`scrum/schema/`. Schemas are JSON Schema documents and may be serialized as JSON
+or YAML. Validation is per-section only; sections without `schema` keep
+free-form metadata behavior. Do not fetch or resolve web URI schemas in this
+version. `mdb validate --json` reports schema errors with additive fields:
+`schema`, `schema_path`, and `path`.
 
 ### mdb context <URI>
 

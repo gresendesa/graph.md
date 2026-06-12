@@ -211,9 +211,10 @@ The engine enters transpiler mode. Based on the `ParsedSection` AST, it navigate
 * Upon encountering an `IncludeDirective` node: interrupts the flow, fetches the target AST, injects it resolving heading levels mathematically, and resumes scanning.
 * **Flags:** `--deduplicate`, `--strict`, `--depth N`, `--json`.
 
-### 8.4. `mdb validate [--root <path>]` (Integrity Validation)
+### 8.4. `mdb validate [--root <path> | --file <path.md>]` (Integrity Validation)
 
-Scans the full repository graph and reports all structural integrity issues without modifying any file.
+Scans the full repository graph, or one Markdown file in isolation, and reports
+all structural integrity issues without modifying any file.
 
 * **Checks performed:**
   * Broken `@ref` and `@include` targets (URIs not found in the index)
@@ -222,10 +223,17 @@ Scans the full repository graph and reports all structural integrity issues with
   * Sections without required `section:` payload
   * Per-section local JSON Schema validation for sections that declare
     `schema`
-* **Schema validation:** `schema` is resolved relative to the repository root.
-  Local JSON and YAML files are accepted when they contain a JSON Schema
-  document. Web URI schemas are not resolved by this operation and produce a
-  deterministic unsupported schema error.
+* **Scope:** `--root <path>` performs recursive integrated repository
+  validation. `--file <path.md>` validates only the selected file. `--root` and
+  `--file` are mutually exclusive.
+* **File isolation:** in `--file` mode, references or includes to sections
+  outside the selected file may be reported as broken because no external graph
+  context is loaded.
+* **Schema validation:** in `--root` mode, `schema` is resolved relative to the
+  repository root. In `--file` mode, `schema` is resolved relative to the
+  selected file's parent directory. Local JSON and YAML files are accepted when
+  they contain a JSON Schema document. Web URI schemas are not resolved by this
+  operation and produce a deterministic unsupported schema error.
 * **Exit codes:** 0 = clean, 1 = errors found
 * **Flags:** `--json` outputs `{"errors": [...], "warnings": [...], "summary": {...}}`.
 
@@ -268,7 +276,10 @@ $$f: G \to \text{ValidationReport}$$
 
 Full graph scan. Collects all structural violations without mutation.
 
-* **Algorithm:** Full DFS traversal of $G$; set membership checks for duplicate IDs; execution-path tracking for cycle detection; local schema loading and per-section metadata validation for nodes that declare `schema`.
+* **Algorithm:** Build a graph from either the recursive root or the selected
+  file, run DFS traversal of $G$, set membership checks for duplicate IDs,
+  execution-path tracking for cycle detection, local schema loading, and
+  per-section metadata validation for nodes that declare `schema`.
 * **Complexity:** $O(V + E)$
 * **Output schema:**
 ```json

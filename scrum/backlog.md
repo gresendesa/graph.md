@@ -54,13 +54,13 @@ Full details for each item are in dedicated files under scrum/backlog/.
 | B-030 | Structured query pseudo-fields and regex predicates | SPR-2026-12 |
 | B-032 | `mdb metadata` commands for structured YAML metadata | SPR-2026-13 |
 | B-033 | Local schema validation for structured section metadata | SPR-2026-14 |
+| B-035 | File-scoped validation mode for `mdb validate` | SPR-2026-15 |
 
 ### Pending
 
 | ID    | Title                                            | Status | PO Priority | Risk       | Detail |
 |-------|--------------------------------------------------|--------|-------------|------------|--------|
 | B-034 | Web URI schema references for section metadata | todo   | 4 (low)    | 2 (medium) | scrum/backlog/B-034.md |
-| B-035 | File-scoped validation mode for `mdb validate` | todo   | pending     | 2 (medium) | scrum/backlog/B-035.md |
 
 ### Obsolete
 

@@ -54,6 +54,63 @@ def _resolve_section_file(uri: str) -> tuple[Path, str, str]:
     return file_path, section_id, abs_uri
 
 
+def _validation_report(graph, schema_root: Path) -> tuple[list[dict], list[dict], dict]:
+    from mdbind.schema_validation import validate_section_schemas
+
+    errors: list[dict] = []
+    warnings: list[dict] = []
+
+    all_uris = set(graph.index.sections.keys())
+    total_edges = sum(len(targets) for targets in graph.outgoing_edges.values())
+
+    # 1. Broken refs and includes
+    for src_uri, section in graph.index.sections.items():
+        for directive in section.directives:
+            if directive.type in ("ref", "include"):
+                if directive.target_uri not in all_uris:
+                    error_type = "broken_ref" if directive.type == "ref" else "broken_include"
+                    errors.append({
+                        "type": error_type,
+                        "uri": src_uri,
+                        "detail": f"target '{directive.target_uri}' not found in index",
+                    })
+
+    # 2. Include cycles (DFS execution-path tracking)
+    def _dfs_cycle(uri: str, path: frozenset[str], visited_global: set[str]) -> None:
+        if uri in path:
+            errors.append({
+                "type": "cycle",
+                "uri": uri,
+                "detail": f"include cycle detected involving '{uri}'",
+            })
+            return
+        if uri in visited_global:
+            return
+        visited_global.add(uri)
+        section = graph.index.sections.get(uri)
+        if section is None:
+            return
+        new_path = path | {uri}
+        for directive in section.directives:
+            if directive.type == "include" and directive.target_uri in all_uris:
+                _dfs_cycle(directive.target_uri, new_path, visited_global)
+
+    visited_global: set[str] = set()
+    for uri in all_uris:
+        _dfs_cycle(uri, frozenset(), visited_global)
+
+    # 3. Per-section local schema validation.
+    errors.extend(validate_section_schemas(graph, schema_root))
+
+    summary = {
+        "total_sections": len(all_uris),
+        "total_edges": total_edges,
+        "errors": len(errors),
+        "warnings": len(warnings),
+    }
+    return errors, warnings, summary
+
+
 # ---------------------------------------------------------------------------
 # metadata
 # ---------------------------------------------------------------------------
@@ -425,6 +482,10 @@ def validate(
         None, "--root", "-r",
         help="Root directory of the repository (default: current directory).",
     ),
+    file: Optional[Path] = typer.Option(
+        None, "--file",
+        help="Validate a single Markdown file in isolation.",
+    ),
     json_output: bool = typer.Option(False, "--json", help="Export result as JSON."),
 ) -> None:
     """
@@ -436,12 +497,41 @@ def validate(
     Exit code 0 = clean, 1 = errors found.
     """
     from mdbind.index import index_repository
-    from mdbind.schema_validation import validate_section_schemas
+    from mdbind.models import SectionGraph, SectionIndex
 
-    repo_root = (root.resolve() if root else Path.cwd())
+    if root is not None and file is not None:
+        detail = "--root and --file cannot be used together"
+        if json_output:
+            errors = [{"type": "invalid_options", "uri": "", "detail": detail}]
+            summary = {"total_sections": 0, "total_edges": 0, "errors": 1, "warnings": 0}
+            typer.echo(_json_dumps({"errors": errors, "warnings": [], "summary": summary}, ensure_ascii=False))
+        else:
+            typer.echo(f"Error: {detail}", err=True)
+        raise typer.Exit(code=1)
 
     try:
-        graph = index_repository(repo_root)
+        if file is not None:
+            file_path = file.resolve()
+            if not file_path.exists():
+                raise ParseError(f"file not found: {file_path}")
+            if not file_path.is_file():
+                raise ParseError(f"not a file: {file_path}")
+
+            sections = parse_file(file_path)
+            index = SectionIndex()
+            graph = SectionGraph(index=index)
+            for section in sections:
+                try:
+                    index.add(section)
+                except ValueError as exc:
+                    raise ParseError(str(exc)) from exc
+                for directive in section.directives:
+                    if directive.type in ("ref", "include"):
+                        graph.add_edge(section.uri, directive.target_uri)
+            schema_root = file_path.parent
+        else:
+            schema_root = (root.resolve() if root else Path.cwd())
+            graph = index_repository(schema_root)
     except ParseError as exc:
         errors = [{"type": "parse_error", "uri": "", "detail": str(exc)}]
         summary = {"total_sections": 0, "total_edges": 0, "errors": 1, "warnings": 0}
@@ -451,57 +541,7 @@ def validate(
             typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1)
 
-    errors: list[dict] = []
-    warnings: list[dict] = []
-
-    all_uris = set(graph.index.sections.keys())
-    total_edges = sum(len(targets) for targets in graph.outgoing_edges.values())
-
-    # 1. Broken refs and includes
-    for src_uri, section in graph.index.sections.items():
-        for directive in section.directives:
-            if directive.type in ("ref", "include"):
-                if directive.target_uri not in all_uris:
-                    error_type = "broken_ref" if directive.type == "ref" else "broken_include"
-                    errors.append({
-                        "type": error_type,
-                        "uri": src_uri,
-                        "detail": f"target '{directive.target_uri}' not found in index",
-                    })
-
-    # 2. Include cycles (DFS execution-path tracking)
-    def _dfs_cycle(uri: str, path: frozenset[str], visited_global: set[str]) -> None:
-        if uri in path:
-            errors.append({
-                "type": "cycle",
-                "uri": uri,
-                "detail": f"include cycle detected involving '{uri}'",
-            })
-            return
-        if uri in visited_global:
-            return
-        visited_global.add(uri)
-        section = graph.index.sections.get(uri)
-        if section is None:
-            return
-        new_path = path | {uri}
-        for directive in section.directives:
-            if directive.type == "include" and directive.target_uri in all_uris:
-                _dfs_cycle(directive.target_uri, new_path, visited_global)
-
-    visited_global: set[str] = set()
-    for uri in all_uris:
-        _dfs_cycle(uri, frozenset(), visited_global)
-
-    # 3. Per-section local schema validation.
-    errors.extend(validate_section_schemas(graph, repo_root))
-
-    summary = {
-        "total_sections": len(all_uris),
-        "total_edges": total_edges,
-        "errors": len(errors),
-        "warnings": len(warnings),
-    }
+    errors, warnings, summary = _validation_report(graph, schema_root)
 
     if json_output:
         typer.echo(_json_dumps(
