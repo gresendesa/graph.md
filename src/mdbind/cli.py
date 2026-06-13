@@ -1363,3 +1363,127 @@ def context_compose(
         if truncated:
             typer.echo(f"# [truncated at ~{token_limit} tokens]\n", err=True)
         typer.echo(content, nl=False)
+
+
+# ---------------------------------------------------------------------------
+# pack and init (B-039)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def pack(
+    directory: Path = typer.Argument(..., help="Source directory containing the templates and manifest.yaml."),
+    output: Path = typer.Option(..., "--output", "-o", help="Target filename of the zipped template bundle."),
+    force: bool = typer.Option(False, "--force", help="Force overwriting the output file."),
+) -> None:
+    """
+    Combines a source directory of markdown templates and schema files into a deterministic, signed .zip package.
+    """
+    from mdbind.template_packages import pack_template_package, TemplatePackagePackError
+
+    try:
+        result = pack_template_package(directory, output, force=force)
+        typer.echo(f"Successfully packed {len(result.files)} files into '{result.output}'.")
+    except TemplatePackagePackError as exc:
+        typer.echo(f"Error packing template package: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def init(
+    template: Path = typer.Option(..., "--template", "-t", help="Path to the template package zip file."),
+    root: Optional[Path] = typer.Option(None, "--root", "-r", help="Target root directory to initialize."),
+    force: bool = typer.Option(False, "--force", help="Force overwriting existing memory files or config."),
+    memory_root: str = typer.Option("scrum", "--memory-root", help="Directory name for project memory files."),
+    profile: str = typer.Option("standard", "--profile", help="Template profile to initialize."),
+    context_file: Optional[Path] = typer.Option(None, "--context", help="JSON or YAML file containing context variables."),
+    var: Optional[list[str]] = typer.Option(None, "--var", help="Pass a context variable in key=value format."),
+) -> None:
+    """
+    Initializes a new directory using a signed template zip package.
+    """
+    from typing import Any
+    import yaml
+    from mdbind.template_packages import (
+        init_from_template_package,
+        inspect_template_package,
+        TemplatePackageError,
+    )
+
+    target_root = root.resolve() if root else Path.cwd()
+
+    try:
+        pkg = inspect_template_package(template, verify_signature=True)
+    except TemplatePackageError as exc:
+        typer.echo(f"Error inspecting template: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    # 1. Parse variables from context_file if provided
+    context: dict[str, Any] = {}
+    if context_file:
+        if not context_file.exists():
+            typer.echo(f"Error: context file '{context_file}' does not exist.", err=True)
+            raise typer.Exit(code=1)
+        try:
+            content = context_file.read_text(encoding="utf-8")
+            if context_file.suffix in (".yaml", ".yml"):
+                context = yaml.safe_load(content) or {}
+            else:
+                import json
+                context = json.loads(content) or {}
+        except Exception as exc:
+            typer.echo(f"Error reading context file: {exc}", err=True)
+            raise typer.Exit(code=1)
+
+    # 2. Parse variables from --var key=value
+    if var:
+        for v in var:
+            if "=" not in v:
+                typer.echo(f"Error: --var must be in key=value format. Received: '{v}'", err=True)
+                raise typer.Exit(code=1)
+            key, val = v.split("=", 1)
+            context[key.strip()] = val.strip()
+
+    # 3. Add memory_root and template_profile to context as well before prompting
+    context.setdefault("memory_root", memory_root)
+    context.setdefault("template_profile", profile)
+
+    # 4. Prompt user for missing required variables if stdin is a TTY
+    import sys
+    for variable in pkg.variables:
+        if variable.name not in context:
+            if sys.stdin.isatty():
+                prompt_str = f"{variable.prompt}"
+                if variable.default is not None:
+                    prompt_str += f" [{variable.default}]"
+                prompt_str += ": "
+                user_val = input(prompt_str).strip()
+                if not user_val and variable.default is not None:
+                    context[variable.name] = variable.default
+                elif not user_val and variable.required:
+                    typer.echo(f"Error: Variable '{variable.name}' is required.", err=True)
+                    raise typer.Exit(code=1)
+                else:
+                    context[variable.name] = user_val
+            else:
+                if variable.default is not None:
+                    context[variable.name] = variable.default
+                elif variable.required:
+                    typer.echo(f"Error: Variable '{variable.name}' is required but was not provided.", err=True)
+                    raise typer.Exit(code=1)
+
+
+    try:
+        result = init_from_template_package(
+            template,
+            target_root,
+            context,
+            force=force,
+            memory_root=memory_root,
+            template_profile=profile,
+        )
+        typer.echo(f"Successfully initialized workspace template '{result.package['name']}' ({result.package['version']}).")
+        typer.echo(f"Configuration file written to '{result.config_file}'.")
+    except TemplatePackageError as exc:
+        typer.echo(f"Error initializing template package: {exc}", err=True)
+        raise typer.Exit(code=1)
+

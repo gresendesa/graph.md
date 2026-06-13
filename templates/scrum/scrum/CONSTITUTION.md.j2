@@ -1,0 +1,551 @@
+# Constitution - {{ project_name }}
+
+```yaml
+section: constitution
+schema: schema/constitution.schema.yaml
+title: Constitution
+project_name: {{ project_name }}
+status: active
+owner: "{{ owner }}"
+created_at: {{ created_at }}
+updated_at: {{ updated_at }}
+tags: [governance, constitution, memory, scrum, mdbind]
+```
+
+This document defines the operating constitution for the project.
+
+## Purpose
+
+```yaml
+section: constitution.purpose
+title: Purpose
+status: active
+owner: "{{ owner }}"
+tags: [purpose, governance]
+```
+
+{{ purpose }}
+
+## Non-Negotiable Rules
+
+```yaml
+section: constitution.non-negotiable-rules
+title: Non-Negotiable Rules
+status: active
+owner: "{{ owner }}"
+tags: [rules, governance]
+```
+
+{% for item in nnr %}
+* {{ item }}
+{% endfor %}
+
+## Strategic Priorities
+
+```yaml
+section: constitution.strategic-priorities
+title: Strategic Priorities
+status: active
+owner: "{{ owner }}"
+tags: [strategy, priorities]
+```
+
+{% for item in strategic_priority %}
+* {{ item }}
+{% endfor %}
+
+## Memory Policy
+
+```yaml
+section: constitution.memory-policy
+title: Memory Policy
+status: active
+owner: "{{ owner }}"
+protected: true
+tags: [memory, governance]
+```
+
+* Only the owner approves changes to the constitution and memory policy.
+
+{% for item in memory_policy %}
+* {{ item }}
+{% endfor %}
+
+## Naming Convention
+
+```yaml
+section: constitution.naming-convention
+title: Naming Convention
+status: active
+owner: "{{ owner }}"
+tags: [naming, ids, governance]
+```
+
+The project must use stable identifiers for backlog items, sprints, and sprint tasks.
+
+### Backlog Items
+
+```yaml
+section: constitution.naming-convention.backlog-items
+title: Backlog Item IDs
+status: active
+owner: "{{ owner }}"
+id_format: B-XXX
+example: B-001
+tags: [backlog, ids]
+```
+
+* Official backlog item ID format: `B-XXX`.
+* Example: `B-001`.
+
+### Sprints
+
+```yaml
+section: constitution.naming-convention.sprints
+title: Sprint IDs
+status: active
+owner: "{{ owner }}"
+id_format: SPR-YYYY-NN
+example: SPR-2026-01
+tags: [sprints, ids]
+```
+
+* Official sprint ID format: `SPR-YYYY-NN`.
+* Example: `SPR-2026-01`.
+
+### Sprint Internal Tasks
+
+```yaml
+section: constitution.naming-convention.sprint-internal-tasks
+title: Sprint Internal Task IDs
+status: active
+owner: "{{ owner }}"
+id_format: S{N}-TXX
+example: S1-T03
+tags: [sprints, tasks, ids]
+```
+
+* Official sprint internal task ID format: `S{N}-TXX`.
+* Example: `S1-T03`.
+
+### ID Rules
+
+```yaml
+section: constitution.naming-convention.rules
+title: ID Rules
+status: active
+owner: "{{ owner }}"
+rules:
+  ids_reusable: false
+  discontinued_status: obsolete
+  id_required_before_status: doing
+tags: [ids, rules]
+```
+
+* IDs cannot be reused.
+* Discontinued IDs must be marked as `obsolete`.
+* Any new item must receive an ID before entering `doing`.
+
+## Definition of Done
+
+```yaml
+section: constitution.definition-of-done
+title: Definition of Done
+status: active
+owner: "{{ owner }}"
+required_checks:
+  - manual_test_documented
+  - regression_checklist_executed
+  - memory_files_updated
+  - rebuilt_container_validation
+  - explicit_po_acceptance_before_final_commit
+  - automated_tests_successful
+tags: [dod, quality, validation]
+```
+
+To mark any item as `done`, the following are mandatory:
+
+1. Manual test documented.
+2. Regression checklist executed and registered.
+3. Project memory files under `scrum/` updated.
+4. Manual validation executed over rebuilt/reinstantiated containers at sprint closing.
+5. Final commit made only after explicit PO acceptance with the system running.
+6. Automated tests in `tests/` executed successfully, with no failures.
+
+[@ref: Sprint closing gate](CONSTITUTION.md#constitution.sprint-closing-gate)
+[@ref: Experience memory](CONSTITUTION.md#constitution.agent-memory-management.experience)
+
+## Sprint Planning
+
+```yaml
+section: constitution.sprint-planning
+title: Sprint Planning
+status: active
+owner: "{{ owner }}"
+required: true
+tags: [sprint, planning, scrum]
+```
+
+Every sprint must go through formal planning, conducted by the agent with owner participation.
+
+During planning, the following are mandatory:
+
+1. Ask the PO for the priority of eligible backlog items.
+2. Register or update the `PO Priority` field in the backlog.
+3. Select backlog items for the sprint according to PO priority.
+4. Decompose selected items into technical tasks.
+5. Calculate risk per task and aggregated sprint risk.
+6. Define execution order.
+7. Register expected blockers and mitigations.
+
+[@ref: Backlog consolidator](backlog.md#backlog)
+[@ref: Sprint consolidator](sprints.md#sprints)
+
+### PO Priority Scale
+
+```yaml
+section: constitution.sprint-planning.po-priority-scale
+title: PO Priority Scale
+status: active
+owner: "{{ owner }}"
+scale:
+  1: critical
+  2: high
+  3: medium
+  4: low
+tags: [priority, planning]
+```
+
+* `1` = critical
+* `2` = high
+* `3` = medium
+* `4` = low
+
+### PO Priority Rule
+
+```yaml
+section: constitution.sprint-planning.po-priority-rule
+title: PO Priority Rule
+status: active
+owner: "{{ owner }}"
+required_field: PO Priority
+tags: [priority, rule]
+```
+
+* No item may enter a sprint without a defined `PO Priority`.
+
+[@ref: Backlog item IDs](CONSTITUTION.md#constitution.naming-convention.backlog-items)
+
+### Task Risk Scale
+
+```yaml
+section: constitution.sprint-planning.task-risk-scale
+title: Task Risk Scale
+status: active
+owner: "{{ owner }}"
+scale:
+  low: 1
+  medium: 2
+  high: 3
+tags: [risk, planning]
+```
+
+* `low` = 1
+* `medium` = 2
+* `high` = 3
+
+### Sprint Risk Calculation
+
+```yaml
+section: constitution.sprint-planning.sprint-risk-calculation
+title: Sprint Risk Calculation
+status: active
+owner: "{{ owner }}"
+method: simple_weighted_average
+classification:
+  low: "<= 1.4"
+  medium: "> 1.4 and <= 2.3"
+  high: "> 2.3"
+tags: [risk, planning]
+```
+
+Sprint risk must be calculated as the simple weighted average of the risks of the selected tasks.
+
+Final classification:
+
+* `<= 1.4`: low
+* `> 1.4 and <= 2.3`: medium
+* `> 2.3`: high
+
+## Sprint Closing Gate
+
+```yaml
+section: constitution.sprint-closing-gate
+title: Sprint Closing Gate
+status: active
+owner: "{{ owner }}"
+required: true
+tags: [sprint, closing, gate, validation]
+```
+
+At sprint closing, the following are mandatory:
+
+1. Obtain explicit PO acceptance in a running environment.
+2. Execute one commit per sprint in each repository involved in the sprint scope.
+
+[@ref: Definition of Done](CONSTITUTION.md#constitution.definition-of-done)
+[@ref: Sprint records](sprints.md#sprints.registered)
+
+## Agent Memory Management
+
+```yaml
+section: constitution.agent-memory-management
+title: Agent Memory Management
+status: active
+owner: "{{ owner }}"
+memory_root: scrum/
+tags: [memory, agent, governance]
+```
+
+The `scrum/` directory is the operational memory of the project and must follow these rules.
+
+[@include: MDBind notation policy](CONSTITUTION.md#constitution.agent-memory-management.mdbind-notation-policy)
+[@ref: Backlog consolidator](backlog.md#backlog)
+[@ref: Sprint consolidator](sprints.md#sprints)
+[@ref: Experience memory](experience.md#experience)
+[@ref: Decision memory](decisions.md#decisions)
+
+### MDBind Notation Policy
+
+```yaml
+section: constitution.agent-memory-management.mdbind-notation-policy
+title: MDBind Notation Policy
+status: active
+owner: "{{ owner }}"
+tool: mdbind
+repository: https://github.com/gresendesa/mdbind
+required: true
+tags: [mdbind, graph, memory, links]
+```
+
+All Markdown files created or updated by the AI in the project memory must use `mdbind` notation.
+
+Each relevant Markdown section must be treated as an addressable graph node and must include a YAML metadata block immediately after the heading.
+
+The YAML metadata block must include, at minimum:
+
+* `section`
+
+The `section` value must be globally unique within the repository.
+
+The AI must use `@ref` or `@include` links whenever it understands that a relationship between sections is necessary for one or more of the following purposes:
+
+* historical composition;
+* reinforcement of relevant context;
+* contextualization of decisions, tasks, incidents, architecture, backlog items, or sprint records;
+* traceability between related records;
+* dependency mapping;
+* impact analysis;
+* future retrieval by agents;
+* composition of a larger document from smaller memory nodes.
+
+Use `@include` when the target section should be expanded inline during document composition.
+
+Use `@ref` when the target section should be linked as a dependency or contextual reference, without embedding its content.
+
+The AI must prefer `@ref` over `@include` when the relationship is useful for traceability but the target content does not need to be embedded in the composed document.
+
+The AI must prefer `@include` when the target content is structurally necessary to understand or materialize the current document.
+
+The AI must avoid creating broken graph edges. Any `@ref` or `@include` target must point to an existing file and an existing `section`.
+
+Before closing a sprint or marking a memory update as complete, the AI should validate the `mdbind` graph whenever the tool is available.
+
+Recommended validation command:
+
+```bash
+mdb validate --root scrum/
+```
+
+### Backlog Consolidator
+
+```yaml
+section: constitution.agent-memory-management.backlog
+title: Backlog Consolidator
+status: active
+owner: "{{ owner }}"
+path: scrum/backlog.md
+tags: [backlog, memory]
+```
+
+* Must act as the synthetic backlog consolidator.
+* Must contain only ID, title, status, PO priority, risk, and pointer to the detailed file.
+
+[@ref: Backlog file](backlog.md#backlog)
+
+### Backlog Item Details
+
+```yaml
+section: constitution.agent-memory-management.backlog-items
+title: Backlog Item Details
+status: active
+owner: "{{ owner }}"
+path: scrum/backlog/B-XXX.md
+tags: [backlog, memory, details]
+```
+
+* Each backlog item must have its own file under `scrum/backlog/`.
+* The detailed file must contain scope, acceptance criteria, dependencies, owner, and update history.
+
+### Sprint Consolidator
+
+```yaml
+section: constitution.agent-memory-management.sprints
+title: Sprint Consolidator
+status: active
+owner: "{{ owner }}"
+path: scrum/sprints.md
+tags: [sprints, memory]
+```
+
+* Must act as the synthetic sprint consolidator.
+* Must contain only summarized status, focus, risk, and pointer to the detailed file.
+
+[@ref: Sprint file](sprints.md#sprints)
+
+### Sprint Details
+
+```yaml
+section: constitution.agent-memory-management.sprint-details
+title: Sprint Details
+status: active
+owner: "{{ owner }}"
+path: scrum/sprints/SPR-YYYY-NN.md
+tags: [sprints, memory, details]
+```
+
+* Each sprint must have its own file under `scrum/sprints/`.
+* The detailed file must contain planning, tasks, risk, execution, blockers, and closing.
+
+### Architecture Memory
+
+```yaml
+section: constitution.agent-memory-management.architecture
+title: Architecture Memory
+status: active
+owner: "{{ owner }}"
+path: scrum/architecture.md
+tags: [architecture, memory]
+```
+
+* Must be updated whenever there is a change in contract, component, or integration flow.
+* Must maintain both current architecture and target architecture sections.
+
+### Experience Memory
+
+```yaml
+section: constitution.agent-memory-management.experience
+title: Experience Memory
+status: active
+owner: "{{ owner }}"
+path: scrum/experience.md
+tags: [experience, retrospective, incident, memory]
+```
+
+* Must be updated in every retrospective or relevant incident.
+* Must register problem, root cause, corrective action, and prevention.
+
+[@ref: Experience file](experience.md#experience)
+
+### Decision Memory
+
+```yaml
+section: constitution.agent-memory-management.decisions
+title: Decision Memory
+status: active
+owner: "{{ owner }}"
+path: scrum/decisions.md
+tags: [decisions, governance, memory]
+```
+
+* Must maintain the history of decisions about memory architecture and process governance.
+* Each decision must register context, choice, impact, and date.
+
+[@ref: Decisions file](decisions.md#decisions)
+
+### History Rule
+
+```yaml
+section: constitution.agent-memory-management.history
+title: History Rule
+status: active
+owner: "{{ owner }}"
+history_deletion_allowed: false
+obsolete_required_fields: [date, reason]
+tags: [history, governance]
+```
+
+* History must not be deleted.
+* Old content must be marked as `obsolete`, with date and reason.
+
+## Record Standard
+
+```yaml
+section: constitution.record-standard
+title: Record Standard
+status: active
+owner: "{{ owner }}"
+required_fields:
+  - status
+  - owner
+  - created_at
+  - updated_at
+tags: [records, metadata]
+```
+
+Every record under `scrum/` must include:
+
+* `status`
+* `owner`
+* `created_at`
+* `updated_at`
+
+### Default Statuses
+
+```yaml
+section: constitution.record-standard.statuses
+title: Default Statuses
+status: active
+owner: "{{ owner }}"
+statuses:
+  - todo
+  - doing
+  - blocked
+  - done
+  - obsolete
+tags: [status, records]
+```
+
+* `todo`
+* `doing`
+* `blocked`
+* `done`
+* `obsolete`
+
+## Validity and Changes
+
+```yaml
+section: constitution.validity-and-changes
+title: Validity and Changes
+status: active
+owner: "{{ owner }}"
+effective: immediately
+change_approval_required_by: owner
+tags: [governance, changes]
+```
+
+This constitution takes effect immediately.
+
+Any change requires explicit owner approval.
+
+[@ref: Memory policy](CONSTITUTION.md#constitution.memory-policy)

@@ -58,12 +58,16 @@ Full details for each item are in dedicated files under scrum/backlog/.
 | B-036 | File-relative schema reference resolution | SPR-2026-16 |
 | B-037 | Schema-backed project memory normalization | SPR-2026-17 |
 | B-038 | `mdb validate --file` reports valid external refs as broken | SPR-2026-18 |
+| B-039 | Template-driven workspace initialization (mdb init & mdb pack) | SPR-2026-19 |
 
 ### Pending
 
 | ID    | Title                                            | Status | PO Priority | Risk       | Detail |
 |-------|--------------------------------------------------|--------|-------------|------------|--------|
 | B-034 | Web URI schema references for section metadata | todo   | 4 (low)    | 2 (medium) | scrum/backlog/B-034.md |
+| B-040 | Sequential ID Scanner & Workflow Validation (Features 2 & 3) | todo   | 2 (high)    | 2 (medium) | scrum/backlog/B-040.md |
+
+
 
 ### Obsolete
 

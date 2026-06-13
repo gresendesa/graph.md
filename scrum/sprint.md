@@ -181,3 +181,14 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 - Result: 9/9 tasks done, 244 tests passing; PO accepted; version bumped to
   0.1.12
 - Detailed file: scrum/sprint/SPR-2026-18.md
+
+### SPR-2026-19
+
+- Status: done
+- Focus: B-039 - template-driven workspace initialization
+- PO Priority of items: B-039 = 2 (high)
+- Sprint risk: low (weighted avg 1.38)
+- Result: 8/8 tasks done, 253 tests passing; PO accepted
+- Detailed file: scrum/sprint/SPR-2026-19.md
+
+

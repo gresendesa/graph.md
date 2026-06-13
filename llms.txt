@@ -226,6 +226,24 @@ Bounded semantic materialization for LLM consumption. Expands the graph starting
 mdb context-compose docs/auth.md#auth --root docs/ --depth 2 --token-limit 2000 --json
 ```
 
+### mdb pack <directory>
+
+Combines a template source directory (with a `manifest.yaml`) into a deterministic, signed `.zip` package. ZIP entries are written in sorted order with a fixed timestamp (1980-01-01) for identical byte output, and includes a `SIGNATURE.yaml` of SHA-256 file checksums and a payload digest.
+
+```
+mdb pack templates/scrum -o scrum_template.zip
+mdb pack templates/scrum -o scrum_template.zip --force
+```
+
+### mdb init
+
+Initializes a new directory using a signed template `.zip` package. Verifies member paths against traversal attacks and checks hashes against `SIGNATURE.yaml`. Renders files using Jinja2 resolving variables via defaults, prompt inputs, context files, or `--var` overrides, and writes a `.mdbconfig` tracking configuration.
+
+```
+mdb init -t scrum_template.zip -r my_new_project/ --var project_name="My New App" --var owner="Bob"
+mdb init --template scrum_template.zip --target-root my_new_project/ --context context.json
+```
+
 ## Recommended patterns for AI agents
 
 **Retrieve a known node:**

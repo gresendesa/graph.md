@@ -239,6 +239,23 @@ all structural integrity issues without modifying any file.
 * **Exit codes:** 0 = clean, 1 = errors found
 * **Flags:** `--json` outputs `{"errors": [...], "warnings": [...], "summary": {...}}`.
 
+### 8.5. `mdb pack <directory> --output <filename.zip>` (Deterministic Scaffolding Packaging)
+
+Combines a source directory of markdown templates and schema files into a deterministic, signed `.zip` package.
+
+* **Mechanics:** The engine scans the source directory, reads `manifest.yaml` (which must be present), validates template file paths, constructs a sorted file manifest, and computes SHA-256 hashes for all files (excluding `SIGNATURE.yaml`).
+* **Deterministic Zip:** ZIP archive entries are written in lexicographically sorted path order, and their timestamps are set to a fixed epoch date (1980-01-01) to ensure the ZIP file hash is identical for identical source directories.
+* **Signature:** Writes a `SIGNATURE.yaml` metadata file containing file checksums and a payload digest to guarantee template integrity.
+
+### 8.6. `mdb init --template <package.zip>` (Workspace Initialization)
+
+Initializes a new directory using a signed template `.zip` package.
+
+* **Mechanics:** Unpacks the template package to a temporary directory, verifies the ZIP member paths against traversal attacks, and verifies file checksums against `SIGNATURE.yaml`.
+* **Rendering:** Renders the template files into the target project using Jinja2 engine, resolving variables specified in `manifest.yaml`.
+* **Configuration:** Writes a `.mdbconfig` file in the root of the project containing project metadata, memory root folder, and template package properties.
+* **Interactive and Non-Interactive:** Supports interactive CLI prompt resolution, or non-interactive mode via `--context <file>` or `--var key=value` arguments.
+
 ---
 
 ## 9. Semantic Memory Model

@@ -1,1 +1,2 @@
 include llms.txt
+recursive-include templates *
