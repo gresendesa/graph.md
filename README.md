@@ -236,6 +236,10 @@ mdb pack templates/scrum -o scrum_template.zip
 mdb init -t scrum_template.zip -r my_new_project/ --var project_name="My New App" --var owner="Bob"
 ```
 
+> [!NOTE]
+> **Workspace Configuration & Rationale:**
+> `mdb init` writes project configuration into `.mdb/config.yaml` at the root of the target directory. Keeping configuration at the repository root serves as a marker for `mdbind` tool operations, stores global variables, enables commands to locate the repository root automatically, and utilizes a dedicated `.mdb/` directory to prevent cluttering the root folder while accommodating future local caches.
+
 ---
 
 ## Philosophy

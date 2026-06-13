@@ -119,6 +119,10 @@ Sprint risk calculation:
 
 The scrum/ folder is the operational memory of the project and must follow these rules:
 
+0. Workspace Configuration (.mdb/config.yaml)
+- The project workspace configuration must reside in `.mdb/config.yaml` at the root of the repository.
+- Placing this configuration in the repository root rather than inside the memory folder itself serves as a project-wide indicator that the workspace is managed by `mdbind`, maps project-wide variables, and enables `mdb` CLI commands to automatically resolve configuration settings (like `--root`). The dedicated `.mdb/` directory keeps the repository root clean while leaving space for future local caches.
+
 1. backlog.md
 - Must act as a synthetic backlog consolidator.
 - Must contain only ID, title, status, PO priority, risk, and pointer to the detailed file.

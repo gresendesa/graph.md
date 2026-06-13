@@ -48,7 +48,7 @@ Initializes a new directory using a signed template:
 1. **Signature Verification**: Verifies `SIGNATURE.yaml` against the unpacked files in memory, raising an error if any file has been modified or added.
 2. **Context Resolution**: Prompts or reads key-value variables declared in `manifest.yaml` (e.g. `project_name`, `owner`, `language`).
 3. **Strict Rendering**: Renders Jinja2 templates (e.g. `.j2` files) under target names, refusing to overwrite existing files unless `--force` is specified.
-4. **Configuration Output**: Writes an `.mdbconfig` or `.mdb/config.yml` tracking the project variables and initialized profile.
+4. **Configuration Output**: Writes a `.mdb/config.yaml` tracking the project variables and initialized profile.
 
 ---
 
@@ -80,9 +80,9 @@ This generalizes sequence generation for backlogs, sprints, decision records, or
 
 ## 4. Feature 3: Generalized State & Transition Validation
 
-Instead of hardcoded Scrum validation, `mdb` can support generic state-transition policies defined in the workspace's configuration file (e.g., `.mdb/config.yml` or `.mdbconfig`).
+Instead of hardcoded Scrum validation, `mdb` can support generic state-transition policies defined in the workspace's configuration file (e.g., `.mdb/config.yaml`).
 
-### Configuration Schema (`.mdbconfig`):
+### Configuration Schema (`.mdb/config.yaml`):
 ```yaml
 workflows:
   - name: backlog_item

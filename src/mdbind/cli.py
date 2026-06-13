@@ -54,8 +54,14 @@ def _resolve_section_file(uri: str) -> tuple[Path, str, str]:
     return file_path, section_id, abs_uri
 
 
-def _validation_report(graph, *, isolated_file: Path | None = None) -> tuple[list[dict], list[dict], dict]:
-    from mdbind.schema_validation import validate_section_schemas
+def _validation_report(
+    graph,
+    *,
+    isolated_file: Path | None = None,
+    repo_root: Path | None = None,
+    commit_ref: str | None = None,
+) -> tuple[list[dict], list[dict], dict]:
+    from mdbind.schema_validation import validate_section_schemas, validate_workflows
 
     errors: list[dict] = []
     warnings: list[dict] = []
@@ -106,6 +112,10 @@ def _validation_report(graph, *, isolated_file: Path | None = None) -> tuple[lis
 
     # 3. Per-section local schema validation.
     errors.extend(validate_section_schemas(graph))
+
+    # 4. Workflow status and transition validation.
+    if repo_root:
+        errors.extend(validate_workflows(graph, repo_root, commit_ref=commit_ref))
 
     summary = {
         "total_sections": len(all_uris),
@@ -499,6 +509,10 @@ def validate(
         help="Validate a single Markdown file in isolation.",
     ),
     json_output: bool = typer.Option(False, "--json", help="Export result as JSON."),
+    since: Optional[str] = typer.Option(
+        None, "--since",
+        help="Git commit reference to compare status transitions against (e.g., 'HEAD~1', 'main').",
+    ),
 ) -> None:
     """
     Verifies the structural integrity of the Markdown graph repository.
@@ -510,6 +524,8 @@ def validate(
     """
     from mdbind.index import index_repository
     from mdbind.models import SectionGraph, SectionIndex
+
+    repo_root = (root.resolve() if root else Path.cwd())
 
     if root is not None and file is not None:
         detail = "--root and --file cannot be used together"
@@ -541,7 +557,6 @@ def validate(
                     if directive.type in ("ref", "include"):
                         graph.add_edge(section.uri, directive.target_uri)
         else:
-            repo_root = (root.resolve() if root else Path.cwd())
             graph = index_repository(repo_root)
     except ParseError as exc:
         errors = [{"type": "parse_error", "uri": "", "detail": str(exc)}]
@@ -555,6 +570,8 @@ def validate(
     errors, warnings, summary = _validation_report(
         graph,
         isolated_file=file_path if file is not None else None,
+        repo_root=repo_root,
+        commit_ref=since,
     )
 
     if json_output:
@@ -1485,5 +1502,32 @@ def init(
         typer.echo(f"Configuration file written to '{result.config_file}'.")
     except TemplatePackageError as exc:
         typer.echo(f"Error initializing template package: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command("next-id")
+def next_id_cmd(
+    prefix: str = typer.Option(..., "--prefix", "-p", help="Prefix for the generated ID (e.g. 'B')"),
+    pattern: str = typer.Option(..., "--pattern", help="Regex pattern matching target ID sequence, with group 1 capturing the number"),
+    root: Path = typer.Option(Path("."), "--root", "-r", help="Root directory of the workspace"),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Ignore index cache"),
+    json_output: bool = typer.Option(False, "--json", help="Output only the result in JSON format"),
+) -> None:
+    """
+    Computes the next sequential ID by scanning the section URIs and metadata values.
+    """
+    from mdbind.index import index_repository
+    from mdbind.template_packages import compute_next_id
+
+    try:
+        graph = index_repository(root, no_cache=no_cache)
+        next_id_val = compute_next_id(graph.index.sections.values(), prefix, pattern)
+        if json_output:
+            import json
+            print(json.dumps({"next_id": next_id_val}))
+        else:
+            print(next_id_val)
+    except Exception as exc:
+        typer.echo(f"Error computing next ID: {exc}", err=True)
         raise typer.Exit(code=1)
 

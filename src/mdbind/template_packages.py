@@ -505,7 +505,7 @@ def _prevent_existing_memory(target_root: Path, memory_root: str, *, force: bool
         return
     existing = []
     memory_path = target_root / memory_root
-    config_path = target_root / ".mdbconfig"
+    config_path = target_root / ".mdb" / "config.yaml"
     if memory_path.exists():
         existing.append(memory_path.relative_to(target_root).as_posix())
     if config_path.exists():
@@ -523,9 +523,9 @@ def _write_init_config(
     context: dict[str, Any],
     force: bool,
 ) -> str:
-    config_path = target_root / ".mdbconfig"
+    config_path = target_root / ".mdb" / "config.yaml"
     if config_path.exists() and not force:
-        raise TemplatePackageError("Refusing to overwrite .mdbconfig without --force.")
+        raise TemplatePackageError("Refusing to overwrite .mdb/config.yaml without --force.")
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config = {
         "memory_root": memory_root,
@@ -620,3 +620,54 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def compute_next_id(sections, prefix: str, pattern: str) -> str:
+    """
+    Computes the next sequential ID by scanning the section URIs and metadata values.
+    """
+    import re
+    try:
+        regex = re.compile(pattern)
+    except re.error as exc:
+        raise ValueError(f"Invalid regex pattern: {exc}")
+
+    values: list[tuple[int, str]] = []
+    
+    for section in sections:
+        # Search URI
+        for match in regex.finditer(section.uri):
+            try:
+                val = int(match.group(1))
+                values.append((val, match.group(1)))
+            except (IndexError, ValueError):
+                pass
+        # Search metadata
+        metadata_str = str(section.metadata)
+        for match in regex.finditer(metadata_str):
+            try:
+                val = int(match.group(1))
+                values.append((val, match.group(1)))
+            except (IndexError, ValueError):
+                pass
+
+    if not values:
+        # Detect width from pattern
+        match_w = re.search(r"\\d\{(\d+)(?:,\d+)?\}", pattern)
+        if match_w:
+            width = int(match_w.group(1))
+        else:
+            match_d = re.findall(r"\\d", pattern)
+            width = len(match_d) if match_d else 3
+        next_number = 1
+    else:
+        # Find maximum value
+        max_val, max_str = max(values, key=lambda x: x[0])
+        width = len(max_str)
+        next_number = max_val + 1
+
+    # Format output
+    if prefix.endswith("-") or prefix.endswith("_") or prefix.endswith("/"):
+        return f"{prefix}{next_number:0{width}d}"
+    else:
+        return f"{prefix}-{next_number:0{width}d}"

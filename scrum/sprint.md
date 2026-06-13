@@ -191,4 +191,14 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 - Result: 8/8 tasks done, 253 tests passing; PO accepted
 - Detailed file: scrum/sprint/SPR-2026-19.md
 
+### SPR-2026-20
+
+- Status: done
+- Focus: B-040 - sequential ID scanner & workflow validation
+- PO Priority of items: B-040 = 2 (high)
+- Sprint risk: low (weighted avg 1.38)
+- Result: 8/8 tasks done, 257 tests passing; PO accepted
+- Detailed file: scrum/sprint/SPR-2026-20.md
+
+
 

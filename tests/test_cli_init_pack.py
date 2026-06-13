@@ -100,7 +100,7 @@ def test_init_success(temp_workspace: Path, tmp_path: Path):
     result = init_from_template_package(output_zip, target_root, context)
     
     assert result.package["name"] == "test-template"
-    assert result.config_file == ".mdbconfig"
+    assert result.config_file == ".mdb/config.yaml"
     
     # Check rendered files
     const_file = target_root / "scrum" / "CONSTITUTION.md"
@@ -115,7 +115,7 @@ def test_init_success(temp_workspace: Path, tmp_path: Path):
     assert inst_file.read_text(encoding="utf-8") == "Instructions for MyAwesomeProject\n"
     
     # Check config file contents
-    config_file = target_root / ".mdbconfig"
+    config_file = target_root / ".mdb" / "config.yaml"
     assert config_file.exists()
     config_data = yaml.safe_load(config_file.read_text(encoding="utf-8"))
     assert config_data["memory_root"] == "scrum"

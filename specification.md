@@ -253,7 +253,8 @@ Initializes a new directory using a signed template `.zip` package.
 
 * **Mechanics:** Unpacks the template package to a temporary directory, verifies the ZIP member paths against traversal attacks, and verifies file checksums against `SIGNATURE.yaml`.
 * **Rendering:** Renders the template files into the target project using Jinja2 engine, resolving variables specified in `manifest.yaml`.
-* **Configuration:** Writes a `.mdbconfig` file in the root of the project containing project metadata, memory root folder, and template package properties.
+* **Configuration:** Writes a `.mdb/config.yaml` file in the root of the project containing project metadata, memory root folder, and template package properties.
+* **Architectural Rationale:** The configuration resides at the repository root under `.mdb/config.yaml` rather than inside the memory folder itself. This serves as a project-wide marker declaring that the workspace is managed by `mdbind`, maps project-wide variables, allows future CLI commands to resolve `--root` automatically from the config, and keeps the repository root uncluttered by using a dedicated `.mdb/` directory for configuration and future indexing cache.
 * **Interactive and Non-Interactive:** Supports interactive CLI prompt resolution, or non-interactive mode via `--context <file>` or `--var key=value` arguments.
 
 ---

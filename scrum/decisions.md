@@ -104,4 +104,13 @@ Record the history of decisions about memory architecture and process governance
   introduce it as an explicit, versioned contract instead of overloading normal
   relative paths.
 
+- ID: DEC-004
+- Date: 2026-06-13
+- Status: approved
+- Context: The PO wanted to transition from a flat `.mdbconfig` file to a more robust, extensible directory-based `.mdb/config.yaml` layout, and wanted to implement a sequential ID scanner and workflow validation system.
+- Decision: Migrate configuration to `.mdb/config.yaml` at the root of the workspace. This dedicated directory allows keeping the root directory clean while accommodating future features (e.g. caches). Add a `next-id` command to scan sections and return the next sequential ID, and add status transition gates to `validate` comparing current states against a historical Git reference if `--since` is provided.
+- Impact: Workspace configuration is cleaner and supports future extensibility. CLI commands support auto-generating sequential IDs and enforcing workflow compliance over commit histories.
+- Files affected: `src/mdbind/template_packages.py`, `src/mdbind/cli.py`, `src/mdbind/schema_validation.py`, `README.md`, `specification.md`, `CONSTITUTION.md`, `templates/scrum/scrum/CONSTITUTION.md.j2`, `tests/test_cli_next_id_workflows.py`, `tests/test_cli_init_pack.py`.
+- Future review: Refine workflows and transitions as more methodologies are mapped.
+
 ---

@@ -237,7 +237,7 @@ mdb pack templates/scrum -o scrum_template.zip --force
 
 ### mdb init
 
-Initializes a new directory using a signed template `.zip` package. Verifies member paths against traversal attacks and checks hashes against `SIGNATURE.yaml`. Renders files using Jinja2 resolving variables via defaults, prompt inputs, context files, or `--var` overrides, and writes a `.mdbconfig` tracking configuration.
+Initializes a new directory using a signed template `.zip` package. Verifies member paths against traversal attacks and checks hashes against `SIGNATURE.yaml`. Renders files using Jinja2 resolving variables via defaults, prompt inputs, context files, or `--var` overrides, and writes a `.mdb/config.yaml` tracking configuration.
 
 ```
 mdb init -t scrum_template.zip -r my_new_project/ --var project_name="My New App" --var owner="Bob"

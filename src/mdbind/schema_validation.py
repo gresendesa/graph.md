@@ -245,3 +245,150 @@ def _raise_schema_invalid(path: list[str], detail: str) -> None:
 
 def _json_path(path: list[Any]) -> str:
     return ".".join(str(part) for part in path)
+
+
+def find_git_root(cwd: Path) -> Path | None:
+    import subprocess
+    try:
+        res = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return Path(res.stdout.strip()).resolve()
+    except Exception:
+        return None
+
+
+def get_historical_file_content(git_root: Path, commit_ref: str, relative_path: str) -> str | None:
+    import subprocess
+    try:
+        res = subprocess.run(
+            ["git", "show", f"{commit_ref}:{relative_path}"],
+            cwd=str(git_root),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return res.stdout
+    except subprocess.CalledProcessError:
+        return None
+
+
+def load_workflows(repo_root: Path) -> list[dict[str, Any]]:
+    config_path = repo_root / ".mdb" / "config.yaml"
+    if not config_path.exists():
+        return []
+    try:
+        import yaml
+        data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        return data.get("workflows") or []
+    except Exception:
+        return []
+
+
+def validate_workflows(graph, repo_root: Path, commit_ref: str | None = None) -> list[dict[str, Any]]:
+    import subprocess
+    import tempfile
+    import re
+    from mdbind.parser import parse_file
+
+    errors = []
+    workflows = load_workflows(repo_root)
+    if not workflows:
+        return []
+
+    # Compile workflow regexes
+    compiled_workflows = []
+    for wf in workflows:
+        name = wf.get("name")
+        pattern_str = wf.get("section_pattern")
+        allowed_statuses = wf.get("allowed_statuses") or []
+        allowed_transitions = wf.get("allowed_transitions") or []
+        if not name or not pattern_str:
+            continue
+        try:
+            pattern = re.compile(pattern_str)
+            compiled_workflows.append({
+                "name": name,
+                "pattern": pattern,
+                "allowed_statuses": allowed_statuses,
+                "allowed_transitions": allowed_transitions
+            })
+        except Exception:
+            pass
+
+    if not compiled_workflows:
+        return []
+
+    # If commit_ref is provided, retrieve historical statuses
+    historical_statuses = {}
+    if commit_ref:
+        git_root = find_git_root(repo_root)
+        if git_root:
+            files_to_check = set(section.file_path for section in graph.index.sections.values())
+            for file_path_str in sorted(files_to_check):
+                file_path = Path(file_path_str)
+                try:
+                    rel_path = file_path.relative_to(git_root).as_posix()
+                except ValueError:
+                    continue
+                hist_content = get_historical_file_content(git_root, commit_ref, rel_path)
+                if hist_content is not None:
+                    with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w", encoding="utf-8") as tmp:
+                        tmp.write(hist_content)
+                        tmp_path = Path(tmp.name)
+                    try:
+                        old_sections = parse_file(tmp_path)
+                        for old_sec in old_sections:
+                            old_sec_name = old_sec.metadata.get("id")
+                            old_sec_status = old_sec.metadata.get("status")
+                            if old_sec_name:
+                                historical_statuses[old_sec_name] = old_sec_status
+                    except Exception:
+                        pass
+                    finally:
+                        try:
+                            tmp_path.unlink()
+                        except OSError:
+                            pass
+
+    # Validate each section
+    for uri, section in sorted(graph.index.sections.items()):
+        sec_name = section.metadata.get("id")
+        if not sec_name:
+            continue
+
+        for wf in compiled_workflows:
+            if wf["pattern"].match(sec_name):
+                current_status = section.metadata.get("status")
+                # 1. Allowed statuses check
+                if current_status not in wf["allowed_statuses"]:
+                    errors.append({
+                        "type": "workflow_status_error",
+                        "uri": uri,
+                        "detail": f"Status '{current_status}' is not allowed for workflow '{wf['name']}'. Allowed: {wf['allowed_statuses']}",
+                    })
+                    continue
+
+                # 2. Transition check
+                if commit_ref and sec_name in historical_statuses:
+                    old_status = historical_statuses[sec_name]
+                    if old_status and old_status != current_status:
+                        transition_allowed = False
+                        for trans in wf["allowed_transitions"]:
+                            if trans.get("from") == old_status:
+                                to_list = trans.get("to") or []
+                                if current_status in to_list:
+                                    transition_allowed = True
+                                    break
+                        if not transition_allowed:
+                            errors.append({
+                                "type": "workflow_transition_error",
+                                "uri": uri,
+                                "detail": f"Status transition from '{old_status}' to '{current_status}' is not allowed for workflow '{wf['name']}'.",
+                            })
+
+    return errors
