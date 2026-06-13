@@ -1,5 +1,17 @@
 # Decisions - Memory and Governance
 
+```yaml
+section: project-decisions
+schema: schema/decision-log.schema.json
+record_type: decision-log
+status: active
+owner: gresendesa
+created: "2026-04-08"
+last_updated: "2026-06-13"
+```
+
+[@ref: architecture log](architecture.md#project-architecture)
+
 Document status: active
 Owner: gresendesa
 Creation date: 2026-04-08
@@ -21,6 +33,28 @@ Record the history of decisions about memory architecture and process governance
 - Future review:
 
 ## History
+
+---
+
+- ID: DEC-003
+- Date: 2026-06-13
+- Status: approved
+- Context: The PO wanted the project's own memory to become coherent with the
+  section notation, schema validation contract, and graph-linking style created
+  so far.
+- Decision: Project memory normalization should use minimal local JSON Schemas,
+  file-relative `schema` references, and intentional `@ref` or `@include`
+  links. `@include` is reserved for composition-worthy source content, while
+  `@ref` records navigational or dependency relationships without duplication.
+- Impact: Current and recent Scrum memory records become first-class MDBind
+  graph nodes. Future agents can validate and traverse project governance
+  records through the same CLI used for product content.
+- Files affected: `scrum/schema/*.schema.json`, `scrum/backlog/B-033.md`,
+  `scrum/backlog/B-036.md`, `scrum/backlog/B-037.md`,
+  `scrum/sprint/SPR-2026-16.md`, `scrum/sprint/SPR-2026-17.md`,
+  `scrum/decisions.md`, `scrum/architecture.md`, `scrum/experience.md`.
+- Future review: Expand schemas and section-backed records gradually instead
+  of forcing every legacy memory entry into strict structure at once.
 
 ---
 

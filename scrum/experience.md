@@ -1,9 +1,22 @@
 # Experience - Retrospective and Process Memory
 
+```yaml
+section: project-experience
+schema: schema/experience-log.schema.json
+record_type: experience-log
+status: active
+owner: gresendesa
+created: "2026-04-08"
+last_updated: "2026-06-13"
+```
+
+[@ref: schema-backed memory backlog](backlog/B-037.md#B-037)
+[@ref: architecture log](architecture.md#project-architecture)
+
 Document status: active
 Owner: gresendesa
 Creation date: 2026-04-08
-Last updated: 2026-06-11
+Last updated: 2026-06-13
 
 ## Purpose
 

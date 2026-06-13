@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "schema",
+    "record_type",
+    "status",
+    "owner",
+    "created",
+    "last_updated"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "schema": { "type": "string" },
+    "record_type": { "const": "decision-log" },
+    "status": { "enum": ["todo", "doing", "blocked", "done", "obsolete", "active"] },
+    "owner": { "type": "string" },
+    "created": { "type": "string" },
+    "last_updated": { "type": "string" }
+  },
+  "additionalProperties": true
+}

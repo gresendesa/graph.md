@@ -56,6 +56,7 @@ Full details for each item are in dedicated files under scrum/backlog/.
 | B-033 | Local schema validation for structured section metadata | SPR-2026-14 |
 | B-035 | File-scoped validation mode for `mdb validate` | SPR-2026-15 |
 | B-036 | File-relative schema reference resolution | SPR-2026-16 |
+| B-037 | Schema-backed project memory normalization | SPR-2026-17 |
 
 ### Pending
 

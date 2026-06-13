@@ -1,5 +1,15 @@
 # Architecture - Components, Contracts, and Flows
 
+```yaml
+section: project-architecture
+schema: schema/architecture-log.schema.json
+record_type: architecture-log
+status: active
+owner: gresendesa
+created: "2026-06-09"
+last_updated: "2026-06-13"
+```
+
 Document status: active
 Owner: gresendesa
 Creation date: 2026-06-09
@@ -127,3 +137,20 @@ Record relevant changes to components, contracts, and flows.
   only from its sections, and runs the same structural and schema checks used
   by root mode. Cross-file refs/includes may be reported as broken because no
   external graph context is loaded.
+
+### 2026-06-13 - Schema-backed project memory normalization
+
+- Status: active
+- Owner: gresendesa
+- Context: Project memory should dogfood MDBind's own section metadata, schema
+  validation, and graph directive capabilities.
+- Change: Added local memory schemas under `scrum/schema/` and normalized the
+  active/recent backlog and sprint records plus root governance logs as
+  section-backed records with file-relative `schema` references. Added
+  intentional `@include` and `@ref` links between sprint scope, backlog items,
+  decisions, architecture, and experience memory.
+- Contract impact: No public CLI contract change. Project memory now has a
+  stronger internal contract and can be validated with `mdb validate --root
+  scrum`.
+- Flow impact: Agents can traverse relevant project-memory connections through
+  MDBind graph commands instead of relying only on file names and prose.

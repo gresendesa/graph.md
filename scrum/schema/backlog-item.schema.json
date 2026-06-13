@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "schema",
+    "record_type",
+    "status",
+    "owner",
+    "created",
+    "last_updated",
+    "po_priority",
+    "risk"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^B-[0-9]{3}$" },
+    "schema": { "type": "string" },
+    "record_type": { "const": "backlog-item" },
+    "status": { "enum": ["todo", "doing", "blocked", "done", "obsolete"] },
+    "owner": { "type": "string" },
+    "created": { "type": "string" },
+    "last_updated": { "type": "string" },
+    "po_priority": { "type": "integer", "minimum": 1, "maximum": 4 },
+    "risk": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sprint": { "type": "string" },
+    "title": { "type": "string" }
+  },
+  "additionalProperties": true
+}

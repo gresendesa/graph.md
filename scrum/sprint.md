@@ -162,3 +162,12 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 - Result: 6/6 tasks done, 242 tests passing; PO accepted; version bumped to
   0.1.11
 - Detailed file: scrum/sprint/SPR-2026-16.md
+
+### SPR-2026-17
+
+- Status: done
+- Focus: B-037 - schema-backed project memory normalization
+- PO Priority of items: B-037 = 2 (high)
+- Sprint risk: medium (weighted avg 2.25)
+- Result: 8/8 tasks done, 242 tests passing; PO accepted
+- Detailed file: scrum/sprint/SPR-2026-17.md
