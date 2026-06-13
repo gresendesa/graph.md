@@ -67,6 +67,7 @@ Full details for each item are in dedicated files under scrum/backlog/.
 
 | ID    | Title                                            | Status | PO Priority | Risk       | Detail |
 |-------|--------------------------------------------------|--------|-------------|------------|--------|
+| B-042 | Global installation guidance using pipx in documentation | todo   | 3 (low)     | 1 (low)    | scrum/backlog/B-042.md |
 
 
 
