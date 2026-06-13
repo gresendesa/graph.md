@@ -221,8 +221,7 @@ all structural integrity issues without modifying any file.
   * Duplicate section IDs within the same repository
   * Include cycles (detected via DFS execution path tracking)
   * Sections without required `section:` payload
-  * Per-section local JSON Schema validation for sections that declare
-    `schema`
+  * Per-section schema validation for sections that declare `schema` (supporting local JSON/YAML schemas, and remote JSON/YAML web URIs resolved via HTTP).
 * **Scope:** `--root <path>` performs recursive integrated repository
   validation. `--file <path.md>` validates only the selected file. `--root` and
   `--file` are mutually exclusive.
@@ -234,10 +233,10 @@ all structural integrity issues without modifying any file.
 * **Schema validation:** `schema` is always resolved relative to the Markdown
   file that contains the section, in both `--root` and `--file` modes. Local
   JSON and YAML files are accepted when they contain a JSON Schema document. Web
-  URI schemas are not resolved by this operation and produce a deterministic
-  unsupported schema error.
+  URI schemas are resolved via HTTP, validated for correct schema mapping structure,
+  and cached in `.mdb/cache/schemas/` to avoid redundant downloads.
 * **Exit codes:** 0 = clean, 1 = errors found
-* **Flags:** `--json` outputs `{"errors": [...], "warnings": [...], "summary": {...}}`.
+* **Flags:** `--json` outputs `{"errors": [...], "warnings": [...], "summary": {...}}`, `--no-cache` forces remote schema fetch.
 
 ### 8.5. `mdb pack <directory> --output <filename.zip>` (Deterministic Scaffolding Packaging)
 
@@ -247,15 +246,17 @@ Combines a source directory of markdown templates and schema files into a determ
 * **Deterministic Zip:** ZIP archive entries are written in lexicographically sorted path order, and their timestamps are set to a fixed epoch date (1980-01-01) to ensure the ZIP file hash is identical for identical source directories.
 * **Signature:** Writes a `SIGNATURE.yaml` metadata file containing file checksums and a payload digest to guarantee template integrity.
 
-### 8.6. `mdb init --template <package.zip>` (Workspace Initialization)
+### 8.6. `mdb init --template <package.zip|URL>` (Workspace Initialization)
 
-Initializes a new directory using a signed template `.zip` package.
+Initializes a new directory using a signed template `.zip` package from a local path or a remote URL.
 
 * **Mechanics:** Unpacks the template package to a temporary directory, verifies the ZIP member paths against traversal attacks, and verifies file checksums against `SIGNATURE.yaml`.
+* **Remote Templates & Checksum Verification:** Supports downloading remote template `.zip` files via HTTP/HTTPS. Remote downloads require the `--checksum <hash>` option to verify the integrity (SHA-256) of the package. Checked-out packages are cached in `.mdb/cache/templates/` under their URL hash to avoid duplicate downloads.
 * **Rendering:** Renders the template files into the target project using Jinja2 engine, resolving variables specified in `manifest.yaml`.
 * **Configuration:** Writes a `.mdb/config.yaml` file in the root of the project containing project metadata, memory root folder, and template package properties.
-* **Architectural Rationale:** The configuration resides at the repository root under `.mdb/config.yaml` rather than inside the memory folder itself. This serves as a project-wide marker declaring that the workspace is managed by `mdbind`, maps project-wide variables, allows future CLI commands to resolve `--root` automatically from the config, and keeps the repository root uncluttered by using a dedicated `.mdb/` directory for configuration and future indexing cache.
+* **Architectural Rationale:** The configuration resides at the repository root under `.mdb/config.yaml` rather than inside the memory folder itself. This serves as a project-wide marker declaring that the workspace is managed by `mdbind`, maps project-wide variables, allows future CLI commands to resolve `--root` automatically from the config, and keeps the repository root uncluttered by using a dedicated `.mdb/` directory for configuration and future indexing cache (including remote schemas and templates).
 * **Interactive and Non-Interactive:** Supports interactive CLI prompt resolution, or non-interactive mode via `--context <file>` or `--var key=value` arguments.
+* **Flags:** `--checksum <hash>` (mandatory for remote templates, optional for local ones), `--no-cache` to force refetching remote templates.
 
 ---
 

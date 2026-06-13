@@ -113,4 +113,17 @@ Record the history of decisions about memory architecture and process governance
 - Files affected: `src/mdbind/template_packages.py`, `src/mdbind/cli.py`, `src/mdbind/schema_validation.py`, `README.md`, `specification.md`, `CONSTITUTION.md`, `templates/scrum/scrum/CONSTITUTION.md.j2`, `tests/test_cli_next_id_workflows.py`, `tests/test_cli_init_pack.py`.
 - Future review: Refine workflows and transitions as more methodologies are mapped.
 
+- ID: DEC-005
+- Date: 2026-06-13
+- Status: approved
+- Context: Implement remote schema retrieval (B-034) and web-based template downloading (B-041). The PO prioritized security and reproducibility, requesting checksum verification for remote template downloads.
+- Decision:
+  1. Allow `mdb validate` to fetch JSON/YAML schemas from remote web URIs using HTTP.
+  2. Implement an `.mdb/cache/` directory to store remote schemas (`.mdb/cache/schemas/`) and template zip files (`.mdb/cache/templates/`).
+  3. Support `--no-cache` flags to bypass cached items and force fresh downloads.
+  4. Make `--checksum` mandatory for remote templates in `mdb init` to enforce SHA-256 validation before unpacking/verifying signatures, and support optional checksum verification for local templates.
+- Impact: Users can leverage remote schemas and templates securely without compromising reproducibility, performance, or offline availability.
+- Files affected: `src/mdbind/schema_validation.py`, `src/mdbind/template_packages.py`, `src/mdbind/cli.py`, `README.md`, `specification.md`, `llms.txt`, `tests/test_cli_web_schemas_templates.py`.
+- Future review: Add automated schema verification and certificate pinning support if required by enterprise environments.
+
 ---

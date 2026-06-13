@@ -107,14 +107,7 @@ schema: schema/domain.schema.json
 status: active
 ```
 
-`schema` references are local-first and always resolved relative to the
-Markdown file that contains the section, in both `--root` and `--file` modes.
-Prefer a colocated `schema/` directory or explicit relative paths to a
-centralized schema directory. Schemas are JSON Schema documents and may be
-serialized as JSON or YAML. Validation is per-section only; sections without
-`schema` keep free-form metadata behavior. Do not fetch or resolve web URI
-schemas in this version. `mdb validate --json` reports schema errors with
-additive fields: `schema`, `schema_path`, and `path`.
+`schema` references are resolved relative to the Markdown file that contains the section when local, or fetched via HTTP if they are web URIs. Schemas are JSON Schema documents and may be serialized as JSON or YAML. Validation is per-section only; sections without `schema` keep free-form metadata behavior. Remote schemas are cached in `.mdb/cache/schemas/` to avoid network hits. Use `--no-cache` to force refetching remote schemas. `mdb validate --json` reports schema errors with additive fields: `schema`, `schema_path`, and `path`.
 
 ### mdb context <URI>
 
@@ -237,11 +230,11 @@ mdb pack templates/scrum -o scrum_template.zip --force
 
 ### mdb init
 
-Initializes a new directory using a signed template `.zip` package. Verifies member paths against traversal attacks and checks hashes against `SIGNATURE.yaml`. Renders files using Jinja2 resolving variables via defaults, prompt inputs, context files, or `--var` overrides, and writes a `.mdb/config.yaml` tracking configuration.
+Initializes a new directory using a signed template `.zip` package (either local path or remote URL). Verifies member paths against traversal attacks and checks hashes against `SIGNATURE.yaml`. Downloads of remote templates require `--checksum <hash>`. Renders files using Jinja2 resolving variables via defaults, prompt inputs, context files, or `--var` overrides, and writes a `.mdb/config.yaml` tracking configuration. Remote downloads are cached in `.mdb/cache/templates/` under their URL hash. Use `--no-cache` to force remote template redownload.
 
 ```
 mdb init -t scrum_template.zip -r my_new_project/ --var project_name="My New App" --var owner="Bob"
-mdb init --template scrum_template.zip --target-root my_new_project/ --context context.json
+mdb init -t https://example.com/scrum.zip --checksum sha256:d8f2a...f7c22 -r my_new_project/ --var project_name="My New App"
 ```
 
 ## Recommended patterns for AI agents

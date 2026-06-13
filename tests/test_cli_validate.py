@@ -329,7 +329,7 @@ class TestValidateSchema:
         assert error["type"] == "schema_invalid"
         assert "mapping" in error["detail"] or "invalid schema" in error["detail"]
 
-    def test_web_uri_schema_is_not_resolved_in_this_sprint(self, tmp_path):
+    def test_web_uri_schema_fails_when_unreachable(self, tmp_path):
         md = tmp_path / "doc.md"
         md.write_text(
             "# Section A\n\n```yaml\nsection: a\nschema: https://example.com/schema.json\n```\n",
@@ -341,9 +341,9 @@ class TestValidateSchema:
         assert result.exit_code == 1
         data = json.loads(result.output)
         error = data["errors"][0]
-        assert error["type"] == "schema_unsupported_uri"
+        assert error["type"] == "schema_unreachable_uri"
         assert error["schema"] == "https://example.com/schema.json"
-        assert "not supported" in error["detail"]
+        assert "failed to fetch remote schema" in error["detail"]
 
 
 class TestValidateFile:

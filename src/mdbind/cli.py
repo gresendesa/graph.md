@@ -60,6 +60,7 @@ def _validation_report(
     isolated_file: Path | None = None,
     repo_root: Path | None = None,
     commit_ref: str | None = None,
+    no_cache: bool = False,
 ) -> tuple[list[dict], list[dict], dict]:
     from mdbind.schema_validation import validate_section_schemas, validate_workflows
 
@@ -111,7 +112,7 @@ def _validation_report(
         _dfs_cycle(uri, frozenset(), visited_global)
 
     # 3. Per-section local schema validation.
-    errors.extend(validate_section_schemas(graph))
+    errors.extend(validate_section_schemas(graph, repo_root=repo_root, no_cache=no_cache))
 
     # 4. Workflow status and transition validation.
     if repo_root:
@@ -513,6 +514,10 @@ def validate(
         None, "--since",
         help="Git commit reference to compare status transitions against (e.g., 'HEAD~1', 'main').",
     ),
+    no_cache: bool = typer.Option(
+        False, "--no-cache",
+        help="Bypass schema caching and force remote fetch.",
+    ),
 ) -> None:
     """
     Verifies the structural integrity of the Markdown graph repository.
@@ -572,6 +577,7 @@ def validate(
         isolated_file=file_path if file is not None else None,
         repo_root=repo_root,
         commit_ref=since,
+        no_cache=no_cache,
     )
 
     if json_output:
@@ -1407,13 +1413,15 @@ def pack(
 
 @app.command()
 def init(
-    template: Path = typer.Option(..., "--template", "-t", help="Path to the template package zip file."),
+    template: str = typer.Option(..., "--template", "-t", help="Path or URL to the template package zip file."),
     root: Optional[Path] = typer.Option(None, "--root", "-r", help="Target root directory to initialize."),
     force: bool = typer.Option(False, "--force", help="Force overwriting existing memory files or config."),
     memory_root: str = typer.Option("scrum", "--memory-root", help="Directory name for project memory files."),
     profile: str = typer.Option("standard", "--profile", help="Template profile to initialize."),
     context_file: Optional[Path] = typer.Option(None, "--context", help="JSON or YAML file containing context variables."),
     var: Optional[list[str]] = typer.Option(None, "--var", help="Pass a context variable in key=value format."),
+    checksum: Optional[str] = typer.Option(None, "--checksum", help="Expected SHA256 checksum of the template package zip file."),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Disable download caching for web-based templates."),
 ) -> None:
     """
     Initializes a new directory using a signed template zip package.
@@ -1423,13 +1431,25 @@ def init(
     from mdbind.template_packages import (
         init_from_template_package,
         inspect_template_package,
+        resolve_template_package_path,
         TemplatePackageError,
     )
 
     target_root = root.resolve() if root else Path.cwd()
 
     try:
-        pkg = inspect_template_package(template, verify_signature=True)
+        resolved_template = resolve_template_package_path(
+            template,
+            checksum=checksum,
+            no_cache=no_cache,
+            repo_root=target_root,
+        )
+    except TemplatePackageError as exc:
+        typer.echo(f"Error resolving template package: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        pkg = inspect_template_package(resolved_template, verify_signature=True)
     except TemplatePackageError as exc:
         typer.echo(f"Error inspecting template: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -1488,10 +1508,9 @@ def init(
                     typer.echo(f"Error: Variable '{variable.name}' is required but was not provided.", err=True)
                     raise typer.Exit(code=1)
 
-
     try:
         result = init_from_template_package(
-            template,
+            resolved_template,
             target_root,
             context,
             force=force,

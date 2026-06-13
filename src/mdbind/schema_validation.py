@@ -19,7 +19,11 @@ class SchemaValidationError(Exception):
         self.error_type = error_type
 
 
-def validate_section_schemas(graph) -> list[dict[str, Any]]:
+def validate_section_schemas(
+    graph,
+    repo_root: Path | None = None,
+    no_cache: bool = False,
+) -> list[dict[str, Any]]:
     errors: list[dict[str, Any]] = []
 
     for uri, section in sorted(graph.index.sections.items()):
@@ -36,14 +40,18 @@ def validate_section_schemas(graph) -> list[dict[str, Any]]:
             ))
             continue
         if _is_web_uri(schema_ref):
-            errors.append(_error(
-                uri=uri,
-                schema=schema_ref,
-                schema_path=schema_ref,
-                path="schema",
-                detail="web URI schemas are not supported in this sprint",
-                error_type="schema_unsupported_uri",
-            ))
+            try:
+                schema = _load_web_schema(schema_ref, repo_root, no_cache)
+                _validate_with_jsonschema(section.metadata, schema)
+            except SchemaValidationError as exc:
+                errors.append(_error(
+                    uri=uri,
+                    schema=schema_ref,
+                    schema_path=schema_ref,
+                    path=exc.path,
+                    detail=str(exc),
+                    error_type=exc.error_type,
+                ))
             continue
 
         schema_base = Path(section.file_path).resolve().parent
@@ -62,6 +70,72 @@ def validate_section_schemas(graph) -> list[dict[str, Any]]:
             ))
 
     return errors
+
+
+def _load_web_schema(schema_ref: str, repo_root: Path | None, no_cache: bool) -> dict[str, Any]:
+    import urllib.request
+    import urllib.error
+    import hashlib
+
+    cache_dir = None
+    if repo_root:
+        cache_dir = Path(repo_root) / ".mdb" / "cache" / "schemas"
+    else:
+        cache_dir = Path.cwd() / ".mdb" / "cache" / "schemas"
+
+    uri_hash = hashlib.sha256(schema_ref.encode("utf-8")).hexdigest()
+    cache_file = cache_dir / f"{uri_hash}.json"
+
+    if not no_cache and cache_file.exists():
+        try:
+            return _load_schema(cache_file)
+        except SchemaValidationError:
+            pass
+
+    try:
+        req = urllib.request.Request(
+            schema_ref,
+            headers={"User-Agent": "MdBind-CLI/0.1.13"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            content_bytes = response.read()
+    except urllib.error.URLError as err:
+        raise SchemaValidationError(
+            f"failed to fetch remote schema from '{schema_ref}': {err}",
+            path="schema",
+            error_type="schema_unreachable_uri",
+        )
+    except Exception as err:
+        raise SchemaValidationError(
+            f"failed to fetch remote schema from '{schema_ref}': {err}",
+            path="schema",
+            error_type="schema_unreachable_uri",
+        )
+
+    try:
+        content_str = content_bytes.decode("utf-8")
+        data = yaml.safe_load(content_str) or {}
+    except Exception as err:
+        raise SchemaValidationError(
+            f"invalid schema document from web URI: {err}",
+            path="schema",
+            error_type="schema_invalid",
+        )
+
+    if not isinstance(data, dict):
+        raise SchemaValidationError(
+            "schema document from web URI must be a mapping",
+            path="schema",
+            error_type="schema_invalid",
+        )
+
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(content_str, encoding="utf-8")
+    except Exception:
+        pass
+
+    return data
 
 
 def _error(

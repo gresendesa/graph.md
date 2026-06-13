@@ -60,12 +60,14 @@ Full details for each item are in dedicated files under scrum/backlog/.
 | B-038 | `mdb validate --file` reports valid external refs as broken | SPR-2026-18 |
 | B-039 | Template-driven workspace initialization (mdb init & mdb pack) | SPR-2026-19 |
 | B-040 | Sequential ID Scanner & Workflow Validation (Features 2 & 3) | SPR-2026-20 |
+| B-034 | Web URI schema references for section metadata | SPR-2026-21 |
+| B-041 | Web-based template packages (fetching template ZIPs from web URIs with checksum verification) | SPR-2026-21 |
 
 ### Pending
 
 | ID    | Title                                            | Status | PO Priority | Risk       | Detail |
 |-------|--------------------------------------------------|--------|-------------|------------|--------|
-| B-034 | Web URI schema references for section metadata | todo   | 4 (low)    | 2 (medium) | scrum/backlog/B-034.md |
+
 
 
 

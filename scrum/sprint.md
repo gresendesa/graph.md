@@ -200,5 +200,14 @@ Full details for each sprint are in dedicated files under scrum/sprint/.
 - Result: 8/8 tasks done, 257 tests passing; PO accepted
 - Detailed file: scrum/sprint/SPR-2026-20.md
 
+### SPR-2026-21
+
+- Status: done
+- Focus: B-034 & B-041 - web-based schemas & templates
+- PO Priority of items: B-034 = 2 (high), B-041 = 2 (high)
+- Sprint risk: medium
+- Result: 8/8 tasks done, 262 tests passing; PO accepted; version bumped to 0.1.13
+- Detailed file: scrum/sprint/SPR-2026-21.md
+
 
 

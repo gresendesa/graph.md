@@ -671,3 +671,113 @@ def compute_next_id(sections, prefix: str, pattern: str) -> str:
         return f"{prefix}{next_number:0{width}d}"
     else:
         return f"{prefix}-{next_number:0{width}d}"
+
+
+def resolve_template_package_path(
+    package_path_or_url: str,
+    *,
+    checksum: str | None = None,
+    no_cache: bool = False,
+    repo_root: Path | None = None,
+) -> Path:
+    """Resolve a template package path from a local file or a remote URL (with checksum verification)."""
+    import urllib.request
+    import urllib.error
+    import hashlib
+
+    # Helper to calculate sha256
+    def _sha256_of_bytes(data: bytes) -> str:
+        return hashlib.sha256(data).hexdigest()
+
+    def _sha256_of_file(path: Path) -> str:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            while chunk := f.read(8192):
+                h.update(chunk)
+        return h.hexdigest()
+
+    # Clean expected checksum
+    expected_hash = None
+    if checksum:
+        expected_hash = checksum.strip()
+        if expected_hash.lower().startswith("sha256:"):
+            expected_hash = expected_hash[7:]
+        expected_hash = expected_hash.lower()
+
+    is_url = package_path_or_url.startswith(("http://", "https://"))
+
+    if is_url:
+        if not expected_hash:
+            raise TemplatePackageError("A checksum is required for remote template packages. Please specify --checksum <hash>.")
+
+        # Cache location
+        cache_dir = None
+        if repo_root:
+            cache_dir = Path(repo_root) / ".mdb" / "cache" / "templates"
+        else:
+            cache_dir = Path.cwd() / ".mdb" / "cache" / "templates"
+
+        url_hash = hashlib.sha256(package_path_or_url.encode("utf-8")).hexdigest()
+        cache_file = cache_dir / f"{url_hash}.zip"
+
+        # Check cache
+        if not no_cache and cache_file.exists():
+            try:
+                cached_hash = _sha256_of_file(cache_file)
+                if cached_hash == expected_hash:
+                    return cache_file
+            except Exception:
+                pass
+
+        # Download remote package
+        try:
+            req = urllib.request.Request(
+                package_path_or_url,
+                headers={"User-Agent": "MdBind-CLI/0.1.13"},
+            )
+            with urllib.request.urlopen(req, timeout=20) as response:
+                content_bytes = response.read()
+        except urllib.error.URLError as err:
+            raise TemplatePackageError(f"Failed to download remote template package: {err}")
+        except Exception as err:
+            raise TemplatePackageError(f"Failed to download remote template package: {err}")
+
+        # Check checksum
+        downloaded_hash = _sha256_of_bytes(content_bytes)
+        if downloaded_hash != expected_hash:
+            raise TemplatePackageError(
+                f"Checksum verification failed for remote template package.\n"
+                f"Expected: {expected_hash}\n"
+                f"Got:      {downloaded_hash}"
+            )
+
+        # Save to cache
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_file.write_bytes(content_bytes)
+        except Exception:
+            pass
+
+        return cache_file
+
+    else:
+        local_path = Path(package_path_or_url)
+        if not local_path.exists():
+            raise TemplatePackageError(f"Template package path does not exist: {local_path}")
+        if not local_path.is_file():
+            raise TemplatePackageError(f"Template package path is not a file: {local_path}")
+
+        # If checksum provided, verify it
+        if expected_hash:
+            try:
+                local_hash = _sha256_of_file(local_path)
+            except Exception as err:
+                raise TemplatePackageError(f"Failed to compute checksum of local template package: {err}")
+            if local_hash != expected_hash:
+                raise TemplatePackageError(
+                    f"Checksum verification failed for local template package.\n"
+                    f"Expected: {expected_hash}\n"
+                    f"Got:      {local_hash}"
+                )
+
+        return local_path

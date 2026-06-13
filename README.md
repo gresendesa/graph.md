@@ -232,13 +232,19 @@ mdb diff --root docs/ --since HEAD~1 --json
 # Pack a template directory
 mdb pack templates/scrum -o scrum_template.zip
 
-# Initialize a workspace memory using the template zip
+# Initialize a workspace memory using a local template zip
 mdb init -t scrum_template.zip -r my_new_project/ --var project_name="My New App" --var owner="Bob"
+
+# Initialize a workspace memory using a remote web-based template package (requires --checksum)
+mdb init -t https://example.com/templates/scrum.zip -r my_new_project/ --checksum d8f2a...f7c22 --var project_name="My New App" --var owner="Bob"
+
+# Validate using web-based schemas and bypassing local cache
+mdb validate --root docs/ --no-cache
 ```
 
 > [!NOTE]
 > **Workspace Configuration & Rationale:**
-> `mdb init` writes project configuration into `.mdb/config.yaml` at the root of the target directory. Keeping configuration at the repository root serves as a marker for `mdbind` tool operations, stores global variables, enables commands to locate the repository root automatically, and utilizes a dedicated `.mdb/` directory to prevent cluttering the root folder while accommodating future local caches.
+> `mdb init` writes project configuration into `.mdb/config.yaml` at the root of the target directory. Keeping configuration at the repository root serves as a marker for `mdbind` tool operations, stores global variables, enables commands to locate the repository root automatically, and utilizes a dedicated `.mdb/` directory to prevent cluttering the root folder while accommodating future local caches (e.g. cached remote schemas and templates in `.mdb/cache/`).
 
 ---
 
